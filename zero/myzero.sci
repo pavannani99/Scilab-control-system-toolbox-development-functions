@@ -1,5 +1,6 @@
 /*=====================================================
-Author: Pavan Kumar
+/*2026 Author: Pavan kumar <pavankumarsimhadri987@gmail.com>*/
+/*
 Function: zero
 Description:
 Compute zeros and gain of LTI model.

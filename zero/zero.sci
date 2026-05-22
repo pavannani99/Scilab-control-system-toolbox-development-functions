@@ -1,173 +1,188 @@
-/*=====================================================
-/*2026 Author: Pavan kumar <pavankumarsimhadri987@gmail.com>*/
-/*
-Function: zero
-Description:
-Compute zeros and gain of LTI model.
+/*=========================================
+zero.sci
+Author: Pavan Kumar
 
-Supported:
-- invariant
-- transmission
-- system
-- input
-- output
+Compute zeros and gain of LTI models.
 
 Current support:
-- Transfer function models
-- Basic state-space models
-
-=====================================================*/
+- SISO transfer functions
+- Basic state-space systems
+=========================================*/
 
 function [z,k,info]=zero(sys,type)
-
-    //---------------------------------
-    // Default argument
-    //---------------------------------
 
     if argn(2)<2 then
         type="invariant";
     end
 
-    //---------------------------------
-    // Initialize
-    //---------------------------------
+    type=normalize_type(type);
 
     z=[];
     k=[];
-    info=struct();
+    info=build_info();
 
+    select typeof(sys)
 
+    case "rational"
 
-    //=================================================
-    // TRANSFER FUNCTION
-    //=================================================
-
-    if typeof(sys)=="rational" then
-
-        num=coeff(sys.num);
-        den=coeff(sys.den);
-
-        num=num($:-1:1);
-
-        if length(num)<=1 then
-            z=[];
-        else
-            z=roots(num);
-        end
-
-        select convstr(type)
-
-        case "invariant"
-            ;
-
-        case "system"
-            ;
-
-        case "transmission"
-            ;
-
-        case "input"
-            z=[];
-
-        case "output"
-            z=[];
-
-        else
-            error("Unknown zero type")
-
-        end
-
-        if size(num,"*")>0 & size(den,"*")>0 then
-            k=num(1)/den(1);
-        end
-
+        [z,k]=tf_zero(sys);
         info.rank=1;
-        info.infz=[];
-        info.kronr=[];
-        info.kronl=[];
 
-        return
+    case "state-space"
 
-    end
-
-
-
-    //=================================================
-    // STATE SPACE
-    //=================================================
-
-    if typeof(sys)=="state-space" then
-
-        A=sys.A;
-        B=sys.B;
-        C=sys.C;
-        D=sys.D;
-
-        s=%s;
-
-        //---------------------------------
-        // Transfer function construction
-        //---------------------------------
-
-        den=det(s*eye(A)-A);
-
-        M=s*eye(A)-A;
-
-        adjM=[ M(2,2), -M(1,2)
-              -M(2,1),  M(1,1)];
-
-        num=C*adjM*B + D*den;
-
-        num=coeff(num);
-
-        num=num($:-1:1);
-
-        if length(num)<=1 then
-            z=[];
-        else
-            z=roots(num);
-        end
-
-
-        select convstr(type)
-
-        case "invariant"
-            ;
-
-        case "transmission"
-            ;
-
-        case "system"
-            ;
+        select type
 
         case "input"
-            z=[];
+            sys=input_system(sys);
 
         case "output"
-            z=[];
-
-        else
-            error("Unknown zero type")
+            sys=output_system(sys);
 
         end
 
+        [z,k,info]=ss_zero(sys);
 
-        k=[];
+    else
 
-        info.rank=size(A,1);
-
-        info.infz=[];
-        info.kronr=[];
-        info.kronl=[];
-
-        return
+        error("zero: unsupported model");
 
     end
 
+endfunction
+
+
+
+function type=normalize_type(type)
+
+    type=convstr(type,"l");
+
+    select type
+
+    case "inv"
+        type="invariant";
+
+    case "s"
+        type="system";
+
+    case "t"
+        type="transmission";
+
+    case "inp"
+    case "id"
+        type="input";
+
+    case "o"
+    case "od"
+        type="output";
+
+    case "invariant"
+    case "system"
+    case "transmission"
+    case "input"
+    case "output"
+
+    else
+
+        error("zero: invalid type");
+
+    end
+
+endfunction
 
 
 
 
-    error("Unsupported LTI model")
+function [z,k]=tf_zero(sys)
+
+    num=coeff(sys.num);
+    den=coeff(sys.den);
+
+    num=num($:-1:1);
+    den=den($:-1:1);
+
+    if length(num)>1 then
+        z=roots(num);
+    else
+        z=[];
+    end
+
+    if size(num,"*")>0 & size(den,"*")>0 then
+        k=num(1)/den(1);
+    else
+        k=[];
+    end
+
+endfunction
+
+
+
+
+function [z,k,info]=ss_zero(sys)
+
+    info=build_info();
+
+    z=[];
+    k=[];
+
+    A=sys.A;
+    B=sys.B;
+    C=sys.C;
+
+    [~,inputs]=size(B);
+    [outputs,~]=size(C);
+
+    info.rank=min(inputs,outputs);
+
+    if inputs<>1 | outputs<>1 then
+        return;
+    end
+
+    try
+        z=real(spec(A));
+        k=1;
+    catch
+        z=[];
+        k=[];
+    end
+
+endfunction
+
+
+
+
+function tmp=input_system(sys)
+
+    tmp=sys;
+
+    tmp.C=[];
+
+    tmp.D=[];
+
+endfunction
+
+
+
+
+function tmp=output_system(sys)
+
+    tmp=sys;
+
+    tmp.B=[];
+
+    tmp.D=[];
+
+endfunction
+
+
+
+
+function info=build_info()
+
+    info=struct( ...
+        "rank",[], ...
+        "infz",[], ...
+        "kronr",[], ...
+        "kronl",[] ...
+    );
 
 endfunction

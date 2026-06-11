@@ -1,110 +1,122 @@
 # display
 
-## Description:
-- The `display` function displays the contents of an object or variable to the console.
-- Used by Scilab/Octave whenever a statement does not end with a semicolon to suppress output.
-- User-defined classes should overload `display` so that something useful is printed for a class object.
+Implements the `display` function in Scilab with inputs and outputs matching Octave's `display` behavior.
 
-## Calling Sequence:
-```
+---
+
+## Syntax
+
+```scilab
 display(obj)
 ```
 
-## Parameters:
-- `obj` - Any Scilab variable to display. Supports: scalar, matrix (real/complex), string, boolean, polynomial, rational (TF), syslin (state-space), struct, list, empty matrix.
+---
 
-## Dependencies:
-- `disp` - Scilab built-in
+## Input
 
-# Examples
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `obj` | any | Object to display |
 
-## 1
-```
+---
+
+## Supported Types
+
+| Type | Scilab typeof | Example |
+|------|--------------|---------|
+| Scalar | `constant` | `display(10)` |
+| Matrix | `constant` | `display([1 2; 3 4])` |
+| String | `string` | `display("Hello")` |
+| Empty matrix | `constant` | `display([])` |
+| Boolean matrix | `boolean` | `display([%t %f])` |
+| Complex matrix | `constant` | `display([1+2*%i])` |
+| State-space system | `state-space` | `display(syslin("c", A, B, C, D))` |
+| Transfer function | `rational` | `display(syslin("c", num, den))` |
+| List | `list` | `display(list(1, "a"))` |
+| Structure | `st` | `display(s)` |
+
+---
+
+## Examples
+
+### Scalar
+```scilab
 display(10)
 ```
-##
+Output:
 ```
-10.
+10
 ```
 
-## 2
-```
+---
+
+### Matrix
+```scilab
 display([1 2; 3 4])
 ```
-##
+Output:
 ```
-1.   2.
-3.   4.
-```
-
-## 3
-```
-display("Hello")
-```
-##
-```
-"Hello"
+   1   2
+   3   4
 ```
 
-## 4
+---
+
+### State-Space System
+```scilab
+A = [-1,0;0,-2]; B = [1;1]; C = [1,0]; D = [0];
+display(syslin("c", A, B, C, D))
 ```
-display([%t %f; %f %t])
+Output:
 ```
-##
-```
-T  F
-F  T
+sys.a =
+       x1  x2
+   x1  -1   0
+   x2   0  -2
+
+sys.b =
+       u1
+   x1   1
+   x2   1
+
+sys.c =
+       x1  x2
+   y1   1   0
+
+sys.d =
+       u1
+   y1   0
+
+Continuous-time model.
 ```
 
-## 5
+---
+
+### Transfer Function
+```scilab
+s = poly(0, "s");
+display(syslin("c", (s+2), (s+1)*(s+3)))
 ```
-A = [-1,0;0,-2]; B=[1;1]; C=[1,0]; D=[0];
-sys = syslin("c", A, B, C, D);
-display(sys)
+Output:
 ```
-##
-```
-  [state-space model]
-  a =
-  -1.   0.
-   0.  -2.
-  b =
-   1.
-   1.
-  c =
-   1.   0.
-  d =
-   0.
-  Continuous-time model.
+Transfer function from input to output ...
+
+            s + 2
+y1:  ---------------
+        s^2 + 4 s + 3
 ```
 
-## 6
-```
-display([])
-```
-##
-```
-[]
+---
+
+## Error Handling
+
+```scilab
+display()       // error: 1 argument expected
+display(a, b)   // error: 1 argument expected
 ```
 
-## 7
-```
-display([1+2*%i, 3-4*%i])
-```
-##
-```
-1. + 2.i   3. - 4.i
-```
+---
 
-## 8
-```
-try
-    display(1, 2);
-catch
-    disp("Test Passed: error correctly thrown");
-end
-```
-##
-```
-Test Passed: error correctly thrown
-```
+## Author
+
+Pavan Kumar — FOSSEE Summer Fellowship 2026, IIT Bombay

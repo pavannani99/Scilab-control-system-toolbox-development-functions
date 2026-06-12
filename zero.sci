@@ -1,5 +1,4 @@
 /*
-
 Description about this function:
 
 01. Parse input arguments to check function call signature details.

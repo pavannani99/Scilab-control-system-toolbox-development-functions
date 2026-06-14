@@ -1,121 +1,129 @@
 funcprot(0);
 
-function c = __zpkdata_coeff__(p)
-    if typeof(p) == "constant" then
-        c = p;
+function retval = is_real_matrix(sys)
+
+```
+retval = 0;
+
+if typeof(sys) == "constant" then
+    if size(sys, "*") >= 1 then
+        if max(abs(imag(sys))) == 0 then
+            retval = 1;
+        end
+    end
+end
+```
+
+endfunction
+
+function p = **remove_leading_zeros**(p)
+
+```
+if typeof(p) <> "constant" then
+    p = coeff(p);
+else
+    p = matrix(p, 1, -1);
+end
+
+p = p($:-1:1);
+
+while length(p) > 1 & abs(p(1)) <= %eps
+    p(1) = [];
+end
+```
+
+endfunction
+
+function [z, p, k, tsam] = zpkdata(sys, rtype)
+
+```
+[lhs, rhs] = argn(0);
+
+if rhs < 1 | rhs > 2 then
+    error("zpkdata: wrong number of input arguments");
+end
+
+if rhs == 1 then
+    rtype = "cell";
+end
+
+if typeof(sys) <> "rational" & typeof(sys) <> "state-space" then
+
+    if ~is_real_matrix(sys) then
+        error(["zpkdata: has to be called with an @lti object ", "or with a real matrix (static gain)"]);
     else
-        c = coeff(p);
-    end
-endfunction
-
-function c = __zpkdata_trim__(c)
-    if size(c, "*") == 0 then
-        c = 0;
-        return;
+        num = sys;
+        den = ones(size(sys, 1), size(sys, 2));
+        tsam = 0;
     end
 
-    while length(c) > 1 & abs(c($)) <= %eps
-        c($) = [];
+else
+
+    if typeof(sys) == "state-space" then
+        sys = ss2tf(sys);
     end
-endfunction
-
-function r = __zpkdata_roots__(p)
-    c = __zpkdata_coeff__(p);
-    c = __zpkdata_trim__(c);
-
-    if length(c) <= 1 then
-        r = [];
-    else
-        r = roots(p);
-    end
-endfunction
-
-function g = __zpkdata_gain__(num, den)
-    cn = __zpkdata_coeff__(num);
-    cd = __zpkdata_coeff__(den);
-
-    cn = __zpkdata_trim__(cn);
-    cd = __zpkdata_trim__(cd);
-
-    if length(cd) == 1 & abs(cd(1)) <= %eps then
-        error("zpkdata: Denominator cannot be zero.");
-    end
-
-    if length(cn) == 1 & abs(cn(1)) <= %eps then
-        g = 0;
-    else
-        g = cn($) / cd($);
-    end
-endfunction
-
-function sys_tf = __zpkdata_to_tf__(sys)
-    typ = typeof(sys);
-
-    if typ == "rational" then
-        sys_tf = sys;
-    elseif typ == "state-space" then
-        sys_tf = ss2tf(sys);
-    else
-        error("zpkdata: Input argument must be an LTI system.");
-    end
-endfunction
-
-function [z, p, k, tsam] = zpkdata(sys, flg)
-
-    rhs = argn(2);
-
-    if rhs < 1 then
-        error("zpkdata: Wrong number of input arguments. At least one input argument expected.");
-    end
-
-    if rhs > 2 then
-        error("zpkdata: Wrong number of input arguments. At most two input arguments expected.");
-    end
-
-    if rhs == 1 then
-        flg = "";
-    end
-
-    if typeof(flg) <> "string" then
-        error("zpkdata: Second argument must be a string.");
-    end
-
-    flg = convstr(flg, "l");
-
-    if flg <> "" & flg <> "v" then
-        error("zpkdata: Second argument must be ""v"".");
-    end
-
-    sys = __zpkdata_to_tf__(sys);
 
     num = sys.num;
     den = sys.den;
     tsam = sys.dt;
 
-    [ny, nu] = size(num);
-
-    if flg == "v" then
-        if ny <> 1 | nu <> 1 then
-            error("zpkdata: The ""v"" option is only valid for SISO systems.");
-        end
-
-        z = __zpkdata_roots__(num(1, 1));
-        p = __zpkdata_roots__(den(1, 1));
-        k = __zpkdata_gain__(num(1, 1), den(1, 1));
-
-    else
-        z = list();
-        p = list();
-        k = zeros(ny, nu);
-
-        for i = 1:ny
-            for j = 1:nu
-                idx = (i - 1) * nu + j;
-                z(idx) = __zpkdata_roots__(num(i, j));
-                p(idx) = __zpkdata_roots__(den(i, j));
-                k(i, j) = __zpkdata_gain__(num(i, j), den(i, j));
-            end
+    if typeof(tsam) == "string" then
+        if tsam == "c" then
+            tsam = 0;
+        else
+            tsam = -1;
         end
     end
+
+end
+
+[ny, nu] = size(num);
+
+z = list();
+p = list();
+k = zeros(ny, nu);
+
+for i = 1:ny
+    for j = 1:nu
+
+        idx = (i - 1) * nu + j;
+
+        n = __remove_leading_zeros__(num(i, j));
+        d = __remove_leading_zeros__(den(i, j));
+
+        if length(n) <= 1 then
+            z(idx) = zeros(0, 1);
+        else
+            z(idx) = roots(poly(n($:-1:1), "x", "coeff"));
+        end
+
+        if length(d) <= 1 then
+            p(idx) = zeros(0, 1);
+        else
+            p(idx) = roots(poly(d($:-1:1), "x", "coeff"));
+        end
+
+        k(i, j) = n(1) / d(1);
+
+    end
+end
+
+if typeof(rtype) <> "string" then
+    error("zpkdata: second argument must be a string");
+end
+
+if length(rtype) >= 1 then
+    if convstr(part(rtype, 1), "l") == "v" then
+
+        if ny <> 1 | nu <> 1 then
+            error("zpkdata: vector output is possible only for SISO systems");
+        end
+
+        z = z(1);
+        p = p(1);
+
+    end
+end
+```
 
 endfunction

@@ -1,125 +1,63 @@
 funcprot(0);
 
-function r = __ss2ss_rank__(M)
-    sv = svd(M);
+function [first_out, second_out, third_out, fourth_out] = ss2ss(first_in, second_in, third_in, fourth_in, fifth_in)
 
-    if size(sv, "*") == 0 then
-        r = 0;
-        return;
+```
+[nargout, nargin] = argn(0);
+
+if nargin <> 2 & nargin <> 5 then
+    error("ss2ss: wrong number of input arguments");
+end
+
+select nargin
+
+case 2 then
+
+    A = first_in.A;
+    B = first_in.B;
+    C = first_in.C;
+    D = first_in.D;
+
+    T = inv(second_in);
+
+case 5 then
+
+    A = first_in;
+    B = second_in;
+    C = third_in;
+    D = fourth_in;
+
+    T = inv(fifth_in);
+
+end
+
+A_T = inv(T) * A * T;
+B_T = inv(T) * B;
+C_T = C * T;
+D_T = D;
+
+select nargin
+
+case 2 then
+
+    if nargout > 1 then
+        error("Too many output arguments");
     end
 
-    mx = max(sv);
+    first_out = syslin("c", A_T, B_T, C_T, D_T);
 
-    if mx == 0 then
-        r = 0;
-    else
-        tol = max(size(M)) * mx * %eps * 1d4;
-        r = size(find(sv > tol), "*");
-    end
-endfunction
+case 5 then
 
-function __ss2ss_check_matrix__(M, name)
-    if typeof(M) <> "constant" then
-        error("ss2ss: " + name + " must be a numeric matrix.");
-    end
-endfunction
-
-function [At, Bt, Ct, Dt] = __ss2ss_transform__(A, B, C, D, T)
-
-    __ss2ss_check_matrix__(A, "A");
-    __ss2ss_check_matrix__(B, "B");
-    __ss2ss_check_matrix__(C, "C");
-    __ss2ss_check_matrix__(D, "D");
-    __ss2ss_check_matrix__(T, "T");
-
-    [na, ma] = size(A);
-
-    if na <> ma then
-        error("ss2ss: A must be a square matrix.");
+    if nargout > 4 then
+        error("Too many output arguments");
     end
 
-    n = na;
+    first_out = A_T;
+    second_out = B_T;
+    third_out = C_T;
+    fourth_out = D_T;
 
-    if size(B, 1) <> n then
-        error("ss2ss: B must have the same number of rows as A.");
-    end
-
-    if size(C, 2) <> n then
-        error("ss2ss: C must have the same number of columns as A.");
-    end
-
-    if size(D, 1) <> size(C, 1) then
-        error("ss2ss: D must have the same number of rows as C.");
-    end
-
-    if size(D, 2) <> size(B, 2) then
-        error("ss2ss: D must have the same number of columns as B.");
-    end
-
-    if size(T, 1) <> n | size(T, 2) <> n then
-        error("ss2ss: T must be a square matrix with the same order as A.");
-    end
-
-    if __ss2ss_rank__(T) < n then
-        error("ss2ss: Transformation matrix T must be nonsingular.");
-    end
-
-    At = T * A / T;
-    Bt = T * B;
-    Ct = C / T;
-    Dt = D;
-
-endfunction
-
-function varargout = ss2ss(varargin)
-
-    [lhs, rhs] = argn(0);
-
-    if rhs == 2 then
-
-        if lhs > 1 then
-            error("ss2ss: Wrong number of output arguments.");
-        end
-
-        sys = varargin(1);
-        T = varargin(2);
-
-        if typeof(sys) <> "state-space" then
-            error("ss2ss: First input must be a state-space system.");
-        end
-
-        A = sys.A;
-        B = sys.B;
-        C = sys.C;
-        D = sys.D;
-
-        [At, Bt, Ct, Dt] = __ss2ss_transform__(A, B, C, D, T);
-
-        varargout(1) = syslin(sys.dt, At, Bt, Ct, Dt);
-
-    elseif rhs == 5 then
-
-        if lhs <> 4 then
-            error("ss2ss: Four output arguments are required for matrix input form.");
-        end
-
-        A = varargin(1);
-        B = varargin(2);
-        C = varargin(3);
-        D = varargin(4);
-        T = varargin(5);
-
-        [At, Bt, Ct, Dt] = __ss2ss_transform__(A, B, C, D, T);
-
-        varargout(1) = At;
-        varargout(2) = Bt;
-        varargout(3) = Ct;
-        varargout(4) = Dt;
-
-    else
-
-        error("ss2ss: Wrong number of input arguments.");
-
-    end
+end
+```
 
 endfunction

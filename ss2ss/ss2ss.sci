@@ -2,7 +2,6 @@ funcprot(0);
 
 function [first_out, second_out, third_out, fourth_out] = ss2ss(first_in, second_in, third_in, fourth_in, fifth_in)
 
-```
 [nargout, nargin] = argn(0);
 
 if nargin <> 2 & nargin <> 5 then
@@ -58,6 +57,6 @@ case 5 then
     fourth_out = D_T;
 
 end
-```
+
 
 endfunction

@@ -1,0 +1,55 @@
+mprintf("Running display test cases...\n\n");
+
+mprintf("Test Case 1: Numeric matrix\n");
+A = [1 2; 3 4];
+display(A);
+
+mprintf("\nTest Case 2: String input\n");
+str = "Scilab control toolbox";
+display(str);
+
+mprintf("\nTest Case 3: Polynomial input\n");
+s = poly(0, "s");
+p = s^2 + 3*s + 2;
+display(p);
+
+mprintf("\nTest Case 4: Transfer function input\n");
+G = syslin("c", (s + 2)/(s^2 + 3*s + 2));
+display(G);
+
+mprintf("\nTest Case 5: Continuous-time state-space system\n");
+A = [0 1; -2 -3];
+B = [0; 1];
+C = [1 0];
+D = [0];
+sysc = syslin("c", A, B, C, D);
+display(sysc);
+
+mprintf("\nTest Case 6: Discrete-time state-space system\n");
+sysd = syslin(0.1, A, B, C, D);
+display(sysd);
+
+mprintf("\nTest Case 7: List input\n");
+L = list(1, "control", [1 2; 3 4]);
+display(L);
+
+mprintf("\nTest Case 8: Structure input\n");
+st.name = "system";
+st.order = 2;
+display(st);
+
+mprintf("\nTest Case 9: Wrong number of inputs\n");
+try
+    display();
+catch
+    mprintf("Error detected successfully.\n");
+end
+
+mprintf("\nTest Case 10: Wrong number of outputs\n");
+try
+    out = display(A);
+catch
+    mprintf("Error detected successfully.\n");
+end
+
+mprintf("\nAll display test cases executed.\n");

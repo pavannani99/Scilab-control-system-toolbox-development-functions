@@ -1,122 +1,195 @@
 # display
 
-Implements the `display` function in Scilab with inputs and outputs matching Octave's `display` behavior.
+## Description
 
----
+`display` displays the contents of an input object on the console.
 
-## Syntax
+The function accepts one input argument and does not return any output argument. It is used to present the contents of an object or variable on screen.
+
+This implementation follows the documented Octave-style behavior of `display(obj)`, where the input object is displayed and no value is returned.
+
+## Calling Sequence
 
 ```scilab
 display(obj)
 ```
 
----
+## Parameters
 
-## Input
+### Input Parameter
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `obj` | any | Object to display |
+`obj`
+Object or variable to be displayed.
 
----
+The input can be a numeric matrix, string, polynomial, transfer function, state-space system, list, structure, or any other valid Scilab object supported by `disp`.
 
-## Supported Types
+### Output Parameter
 
-| Type | Scilab typeof | Example |
-|------|--------------|---------|
-| Scalar | `constant` | `display(10)` |
-| Matrix | `constant` | `display([1 2; 3 4])` |
-| String | `string` | `display("Hello")` |
-| Empty matrix | `constant` | `display([])` |
-| Boolean matrix | `boolean` | `display([%t %f])` |
-| Complex matrix | `constant` | `display([1+2*%i])` |
-| State-space system | `state-space` | `display(syslin("c", A, B, C, D))` |
-| Transfer function | `rational` | `display(syslin("c", num, den))` |
-| List | `list` | `display(list(1, "a"))` |
-| Structure | `st` | `display(s)` |
+This function does not return any output argument.
 
----
+## Dependencies
 
-## Examples
+This function uses the following Scilab built-in functions:
 
-### Scalar
 ```scilab
-display(10)
-```
-Output:
-```
-10
+argn
+disp
+error
 ```
 
----
+No external dependency file is required.
 
-### Matrix
+## Test Cases
+
+### Test Case 1: Numeric matrix
+
 ```scilab
-display([1 2; 3 4])
-```
-Output:
-```
-   1   2
-   3   4
+A = [1 2; 3 4];
+display(A);
 ```
 
----
+Expected behavior:
 
-### State-Space System
+```text
+The numeric matrix is displayed.
+```
+
+### Test Case 2: String input
+
 ```scilab
-A = [-1,0;0,-2]; B = [1;1]; C = [1,0]; D = [0];
-display(syslin("c", A, B, C, D))
-```
-Output:
-```
-sys.a =
-       x1  x2
-   x1  -1   0
-   x2   0  -2
-
-sys.b =
-       u1
-   x1   1
-   x2   1
-
-sys.c =
-       x1  x2
-   y1   1   0
-
-sys.d =
-       u1
-   y1   0
-
-Continuous-time model.
+str = "Scilab control toolbox";
+display(str);
 ```
 
----
+Expected behavior:
 
-### Transfer Function
+```text
+The string is displayed.
+```
+
+### Test Case 3: Polynomial input
+
 ```scilab
 s = poly(0, "s");
-display(syslin("c", (s+2), (s+1)*(s+3)))
-```
-Output:
-```
-Transfer function from input to output ...
-
-            s + 2
-y1:  ---------------
-        s^2 + 4 s + 3
+p = s^2 + 3*s + 2;
+display(p);
 ```
 
----
+Expected behavior:
 
-## Error Handling
+```text
+The polynomial is displayed.
+```
+
+### Test Case 4: Transfer function input
 
 ```scilab
-display()       // error: 1 argument expected
-display(a, b)   // error: 1 argument expected
+s = poly(0, "s");
+G = syslin("c", (s + 2)/(s^2 + 3*s + 2));
+display(G);
 ```
 
----
+Expected behavior:
 
-## Author
+```text
+The transfer function is displayed.
+```
 
-Pavan Kumar — FOSSEE Summer Fellowship 2026, IIT Bombay
+### Test Case 5: Continuous-time state-space system
+
+```scilab
+A = [0 1; -2 -3];
+B = [0; 1];
+C = [1 0];
+D = [0];
+
+sysc = syslin("c", A, B, C, D);
+display(sysc);
+```
+
+Expected behavior:
+
+```text
+The continuous-time state-space system is displayed.
+```
+
+### Test Case 6: Discrete-time state-space system
+
+```scilab
+A = [0 1; -2 -3];
+B = [0; 1];
+C = [1 0];
+D = [0];
+
+sysd = syslin(0.1, A, B, C, D);
+display(sysd);
+```
+
+Expected behavior:
+
+```text
+The discrete-time state-space system is displayed.
+```
+
+### Test Case 7: List input
+
+```scilab
+L = list(1, "control", [1 2; 3 4]);
+display(L);
+```
+
+Expected behavior:
+
+```text
+The list is displayed.
+```
+
+### Test Case 8: Structure input
+
+```scilab
+st.name = "system";
+st.order = 2;
+display(st);
+```
+
+Expected behavior:
+
+```text
+The structure is displayed.
+```
+
+### Test Case 9: Wrong number of inputs
+
+```scilab
+try
+    display();
+catch
+    mprintf("Error detected successfully.\n");
+end
+```
+
+Expected behavior:
+
+```text
+The function rejects an invalid number of input arguments.
+```
+
+### Test Case 10: Wrong number of outputs
+
+```scilab
+try
+    out = display(A);
+catch
+    mprintf("Error detected successfully.\n");
+end
+```
+
+Expected behavior:
+
+```text
+The function rejects output arguments because display does not return a value.
+```
+
+## Notes
+
+The documented behavior of `display` is to accept one object and display its contents on screen. This implementation uses Scilab's native `disp` function to display the object content while validating the number of input and output arguments.

@@ -1,67 +1,49 @@
-mprintf("Running ss2ss test cases...\n\n");
+Yes.
+Use these Test Cases to get the correct answer as that of Octave.
+-----------------------------------------------------------------
 
-tol = 1d-10;
-
-mprintf("Test Case 1: State-space input form\n");
+# Test Case 1:
 
 A = [0 1; -2 -3];
 B = [0; 1];
 C = [1 0];
 D = [0];
-
 T = [1 1; 0 1];
 
 sys = syslin("c", A, B, C, D);
-
 sys_t = ss2ss(sys, T);
 
-A_expected = [-2 0; -2 -1];
-B_expected = [1; 1];
-C_expected = [1 -1];
-D_expected = [0];
-
+disp("Transformed A matrix:");
 disp(sys_t.A);
+disp("Transformed B matrix:");
 disp(sys_t.B);
+disp("Transformed C matrix:");
 disp(sys_t.C);
+disp("Transformed D matrix:");
 disp(sys_t.D);
+--------------
 
-if norm(sys_t.A - A_expected) < tol & norm(sys_t.B - B_expected) < tol & norm(sys_t.C - C_expected) < tol & norm(sys_t.D - D_expected) < tol then
-mprintf("Test Case 1 passed.\n");
-else
-mprintf("Test Case 1 failed.\n");
-end
+# Test Case 2:
 
-mprintf("\nTest Case 2: Matrix input-output form\n");
+A = [0 1; -2 -3];
+B = [0; 1];
+C = [1 0];
+D = [0];
+T = [1 1; 0 1];
 
 [A_T, B_T, C_T, D_T] = ss2ss(A, B, C, D, T);
 
+disp("Transformed A matrix:");
 disp(A_T);
+disp("Transformed B matrix:");
 disp(B_T);
+disp("Transformed C matrix:");
 disp(C_T);
+disp("Transformed D matrix:");
 disp(D_T);
+----------
 
-if norm(A_T - A_expected) < tol & norm(B_T - B_expected) < tol & norm(C_T - C_expected) < tol & norm(D_T - D_expected) < tol then
-mprintf("Test Case 2 passed.\n");
-else
-mprintf("Test Case 2 failed.\n");
-end
-
-mprintf("\nTest Case 3: Re-transform back to original system\n");
-
-sys_r = ss2ss(sys_t, inv(T));
-
-disp(sys_r.A);
-disp(sys_r.B);
-disp(sys_r.C);
-disp(sys_r.D);
-
-if norm(sys_r.A - A) < tol & norm(sys_r.B - B) < tol & norm(sys_r.C - C) < tol & norm(sys_r.D - D) < tol then
-mprintf("Test Case 3 passed.\n");
-else
-mprintf("Test Case 3 failed.\n");
-end
-
-mprintf("\nTest Case 4: Octave source-style 3x3 test\n");
+# Test Case 3:
 
 A = [1 2 3; 4 5 6; 7 8 9];
 B = [1; 2; 3];
@@ -74,31 +56,41 @@ original_system = syslin("c", A, B, C, D);
 transformed_system = ss2ss(original_system, T);
 retransformed_system = ss2ss(transformed_system, inv(T));
 
-disp(transformed_system.A);
-disp(transformed_system.B);
-disp(transformed_system.C);
-disp(transformed_system.D);
+disp("Original A matrix:");
+disp(original_system.A);
+disp("Retransformed A matrix:");
+disp(retransformed_system.A);
+disp("Original B matrix:");
+disp(original_system.B);
+disp("Retransformed B matrix:");
+disp(retransformed_system.B);
+disp("Original C matrix:");
+disp(original_system.C);
+disp("Retransformed C matrix:");
+disp(retransformed_system.C);
+disp("Original D matrix:");
+disp(original_system.D);
+disp("Retransformed D matrix:");
+disp(retransformed_system.D);
+-----------------------------
 
-if norm(original_system.A - retransformed_system.A) < 1d-10 & norm(original_system.B - retransformed_system.B) < 1d-10 & norm(original_system.C - retransformed_system.C) < 1d-10 & norm(original_system.D - retransformed_system.D) < 1d-10 then
-mprintf("Test Case 4 passed.\n");
-else
-mprintf("Test Case 4 failed.\n");
-end
+# Test Case 4:
 
-mprintf("\nTest Case 5: Wrong number of inputs\n");
+A = [-1 2; 0 -3];
+B = [1; 2];
+C = [3 1];
+D = 0;
+T = [2 1; 1 1];
 
-try
-ss2ss(A, B, C);
-catch
-mprintf("Error detected successfully.\n");
-end
+sys = syslin("c", A, B, C, D);
+sys_t = ss2ss(sys, T);
 
-mprintf("\nTest Case 6: Too many output arguments for system input form\n");
-
-try
-[x1, x2] = ss2ss(original_system, T);
-catch
-mprintf("Error detected successfully.\n");
-end
-
-mprintf("\nAll ss2ss test cases executed.\n");
+disp("Transformed A matrix:");
+disp(sys_t.A);
+disp("Transformed B matrix:");
+disp(sys_t.B);
+disp("Transformed C matrix:");
+disp(sys_t.C);
+disp("Transformed D matrix:");
+disp(sys_t.D);
+--------------

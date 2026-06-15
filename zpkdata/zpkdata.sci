@@ -2,7 +2,6 @@ funcprot(0);
 
 function retval = is_real_matrix(sys)
 
-```
 retval = 0;
 
 if typeof(sys) == "constant" then
@@ -30,13 +29,13 @@ p = p($:-1:1);
 while length(p) > 1 & abs(p(1)) <= %eps
     p(1) = [];
 end
-```
+
 
 endfunction
 
 function [z, p, k, tsam] = zpkdata(sys, rtype)
 
-```
+
 [lhs, rhs] = argn(0);
 
 if rhs < 1 | rhs > 2 then
@@ -124,6 +123,5 @@ if length(rtype) >= 1 then
 
     end
 end
-```
 
 endfunction

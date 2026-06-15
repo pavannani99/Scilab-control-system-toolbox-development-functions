@@ -11,13 +11,13 @@ if typeof(sys) == "constant" then
         end
     end
 end
-```
+
 
 endfunction
 
 function p = **remove_leading_zeros**(p)
 
-```
+
 if typeof(p) <> "constant" then
     p = coeff(p);
 else

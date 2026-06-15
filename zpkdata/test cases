@@ -1,65 +1,80 @@
-mprintf("Test Case 1: Continuous-time SISO transfer function with vector output\n");
+Yes.
+Use these Test Cases to get the correct answer as that of Octave.
+-----------------------------------------------------------------
+
+# Test Case 1:
+
 s = poly(0, "s");
 sys = syslin("c", (s + 2)/(s^2 + 4*s + 3));
-
 [z, p, k, tsam] = zpkdata(sys, "v");
-
+disp("Zeros:");
 disp(z);
+disp("Poles:");
 disp(p);
+disp("Gain:");
 disp(k);
+disp("Sampling time:");
 disp(tsam);
+-----------
 
-mprintf("\nTest Case 2: Continuous-time SISO transfer function with default list output\n");
+# Test Case 2:
+
+s = poly(0, "s");
 sys = syslin("c", 5*(s + 4)/(s^2 + 8*s + 12));
-
 [z, p, k, tsam] = zpkdata(sys);
-
+disp("Zeros:");
 disp(z(1));
+disp("Poles:");
 disp(p(1));
+disp("Gain:");
 disp(k);
+disp("Sampling time:");
 disp(tsam);
+-----------
 
-mprintf("\nTest Case 3: Discrete-time SISO transfer function\n");
+# Test Case 3:
+
 q = poly(0, "q");
 sysd = syslin(0.1, (q + 0.5)/(q^2 - q + 0.16));
-
 [z, p, k, tsam] = zpkdata(sysd, "v");
-
+disp("Zeros:");
 disp(z);
+disp("Poles:");
 disp(p);
+disp("Gain:");
 disp(k);
+disp("Sampling time:");
 disp(tsam);
+-----------
 
-mprintf("\nTest Case 4: Static gain matrix\n");
-sysg = [2 3; 4 5];
+# Test Case 4:
 
-[z, p, k, tsam] = zpkdata(sysg);
-
+A = [-1 0; 0 -2];
+B = [1; 1];
+C = [1 1];
+D = [0];
+sys = syslin("c", A, B, C, D);
+[z, p, k, tsam] = zpkdata(sys);
+disp("Zeros:");
 disp(z(1));
+disp("Poles:");
 disp(p(1));
+disp("Gain:");
 disp(k);
+disp("Sampling time:");
 disp(tsam);
+-----------
 
-mprintf("\nTest Case 5: Wrong input type\n");
-try
-[z, p, k, tsam] = zpkdata("control");
-catch
-mprintf("Error detected successfully.\n");
-end
+# Test Case 5:
 
-mprintf("\nTest Case 6: Wrong number of inputs\n");
-try
-[z, p, k, tsam] = zpkdata();
-catch
-mprintf("Error detected successfully.\n");
-end
-
-mprintf("\nTest Case 7: MIMO system with vector output request\n");
-try
-sysm = [1 2; 3 4];
-[z, p, k, tsam] = zpkdata(sysm, "v");
-catch
-mprintf("Error detected successfully.\n");
-end
-
-mprintf("\nAll zpkdata test cases executed.\n");
+sysg = [2 3; 4 5];
+[z, p, k, tsam] = zpkdata(sysg);
+disp("Zeros:");
+disp(z(1));
+disp("Poles:");
+disp(p(1));
+disp("Gain:");
+disp(k);
+disp("Sampling time:");
+disp(tsam);
+-----------

@@ -1,169 +1,147 @@
-# ss2ss
+```markdown
+# zpkdata
 
 ## Description
-
-`ss2ss` applies a similarity transformation to a state-space model.
-
-The function can be used either with a complete state-space system or directly with the state-space matrices `A`, `B`, `C`, and `D`.
+`zpkdata` returns zero-pole-gain data of an LTI system or a real-valued static gain matrix.
 
 ## Calling Sequence
-
-```scilab
-sys_t = ss2ss(sys, T)
 ```
-
-```scilab
-[A_T, B_T, C_T, D_T] = ss2ss(A, B, C, D, T)
+[z, p, k, tsam] = zpkdata(sys)
+[z, p, k, tsam] = zpkdata(sys, "v")
 ```
 
 ## Parameters
 
-`sys`
-State-space system.
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `sys` | LTI / Matrix | Input LTI model or real-valued matrix treated as continuous-time static gain |
+| `rtype` | String | Optional. If `"v"` or `"vector"`, returns `z` and `p` as vectors for SISO systems. Default is `"cell"` |
+| `z` | List | Zeros for each channel. `z(i,j)` contains zeros from input j to output i |
+| `p` | List | Poles for each channel. `p(i,j)` contains poles from input j to output i |
+| `k` | Matrix | Gain matrix. `k(i,j)` contains gain from input j to output i |
+| `tsam` | Double | Sampling time in seconds. Returns `0` for continuous-time systems |
 
-`A`
-State matrix.
+## Variable Reference
 
-`B`
-Input matrix.
+| Variable | Type | Description |
+| --- | --- | --- |
+| `sys` | LTI / Matrix | Input system |
+| `rtype` | String | Return type selector |
+| `num` | Matrix | Numerator polynomials extracted from `tfdata` |
+| `den` | Matrix | Denominator polynomials extracted from `tfdata` |
+| `tsam` | Double | Sampling time |
+| `z` | List | Computed zeros per channel |
+| `p` | List | Computed poles per channel |
+| `k` | Matrix | Computed gain per channel |
+| `ny` | Integer | Number of outputs |
+| `nu` | Integer | Number of inputs |
+| `idx` | Integer | Linear index for list storage |
 
-`C`
-Output matrix.
+## Helper Functions
 
-`D`
-Feedthrough matrix.
+| Function | Purpose |
+| --- | --- |
+| `__remove_leading_zeros__(p)` | Removes leading zeros from a polynomial coefficient vector |
 
-`T`
-Transformation matrix.
+## Algorithm
+1. Set default `rtype = "cell"` if not supplied
+2. Check if `sys` is an LTI object. If not, check if it is a real matrix and convert using `syslin("c", sys)`
+3. Extract `num`, `den`, `tsam` using `tfdata`
+4. Remove leading zeros from each numerator and denominator entry
+5. Compute zeros using `roots(num)`
+6. Compute poles using `roots(den)`
+7. Compute gain as `num(1) / den(1)` for each channel
+8. If `rtype` starts with `"v"` and system is SISO, return `z` and `p` directly instead of as lists
 
-`sys_t`
-Transformed state-space system.
+## Dependencies
+`tfdata`, `syslin`, `roots`, `argn`, `typeof`, `find`, `isempty`, `strncmpi`, `size`
 
-`A_T`
-Transformed state matrix.
+## Files
+- `zpkdata.sci`
+- `zpkdata_test.sce`
+- `README.md`
 
-`B_T`
-Transformed input matrix.
-
-`C_T`
-Transformed output matrix.
-
-`D_T`
-Transformed feedthrough matrix.
-
-## Method
-
-For the two-input form:
-
+## How to Run
 ```scilab
-sys_t = ss2ss(sys, T)
+exec("zpkdata.sci", -1);
+exec("zpkdata_test.sce", -1);
 ```
-
-the matrices are extracted from the Scilab state-space system using:
-
-```scilab
-A = sys.A
-B = sys.B
-C = sys.C
-D = sys.D
-```
-
-For the five-input form:
-
-```scilab
-[A_T, B_T, C_T, D_T] = ss2ss(A, B, C, D, T)
-```
-
-the matrices are taken directly from the input arguments.
-
-The transformed matrices are computed as:
-
-```scilab
-A_T = inv(T)*A*T
-B_T = inv(T)*B
-C_T = C*T
-D_T = D
-```
-
-Since the Octave implementation internally uses `T = inv(input_T)`, the Scilab translation preserves the same computation order.
-
-## Source Translation Notes
-
-This implementation is based on the Octave Control Package `ss2ss` source structure.
-
-The main variable names are preserved:
-
-`first_in`, `second_in`, `third_in`, `fourth_in`, `fifth_in`
-
-`first_out`, `second_out`, `third_out`, `fourth_out`
-
-`A`, `B`, `C`, `D`, `T`
-
-`A_T`, `B_T`, `C_T`, `D_T`
-
-The Octave line:
-
-```octave
-[A,B,C,D] = ssdata(first_in);
-```
-
-is translated using Scilab state-space fields:
-
-```scilab
-A = first_in.A;
-B = first_in.B;
-C = first_in.C;
-D = first_in.D;
-```
-
-The Octave line:
-
-```octave
-first_out = ss(A_T,B_T,C_T,D_T);
-```
-
-is translated using Scilab `syslin`:
-
-```scilab
-first_out = syslin("c", A_T, B_T, C_T, D_T);
-```
-
-No wrapper functions are added. The code directly uses Scilab-native state-space syntax.
 
 ## Test Cases
 
-The included test cases check:
-
-1. State-space system input transformation.
-2. Retransformation back to the original system.
-3. Matrix input-output form.
-4. Wrong number of input arguments.
-5. Too many output arguments.
-
-## Dependencies
-
-`syslin`
-
-`inv`
-
-`norm`
-
-`disp`
-
-`argn`
-
-`error`
-
-## How to Run
-
-Save the file as:
-
-```text
-ss2ss.sci
-```
-
-Run it in Scilab:
+### Test Case 1 — SISO Transfer Function
 
 ```scilab
-exec("ss2ss.sci", -1);
+s = poly(0, "s");
+sys = syslin("c", (s + 2) / (s^2 + 4*s + 3));
+[z, p, k, tsam] = zpkdata(sys, "v");
+```
+
+**Expected output:** `k = 1`, `tsam = 0`, one zero at `-2`, poles at `-1` and `-3`
+
+---
+
+### Test Case 2 — Gain Calculation
+
+```scilab
+s = poly(0, "s");
+sys = syslin("c", 5*(s + 4) / (s^2 + 8*s + 12));
+[z, p, k, tsam] = zpkdata(sys, "v");
+```
+
+**Expected output:** `k = 5`, `tsam = 0`
+
+---
+
+### Test Case 3 — State-Space Input
+
+```scilab
+A = [-1 0; 0 -2]; B = [1; 1]; C = [1 1]; D = [0];
+sys = syslin("c", A, B, C, D);
+[z, p, k, tsam] = zpkdata(sys);
+```
+
+**Expected output:** `z` and `p` returned as lists
+
+---
+
+### Test Case 4 — Static Gain Matrix
+
+```scilab
+sys = [2 3; 4 5];
+[z, p, k, tsam] = zpkdata(sys);
+```
+
+**Expected output:** `k = [2 3; 4 5]`, `tsam = 0`
+
+---
+
+### Test Case 5 — Invalid Input
+
+```scilab
+try
+    zpkdata("abc");
+catch
+    disp("Invalid input detected successfully");
+end
+```
+
+**Expected output:** Error raised for non-LTI non-matrix input
+
+---
+
+### Test Case 6 — Wrong Number of Arguments
+
+```scilab
+try
+    zpkdata();
+catch
+    disp("Wrong number of inputs detected successfully");
+end
+```
+
+**Expected output:** Error raised for missing input
+
+## Compatibility Notes
+This function is a Scilab translation of the GNU Octave Control Package `zpkdata` function. Octave uses cell arrays and `cellfun` for vectorized operations over numerator and denominator entries. Scilab does not support cell arrays, so these are replaced with lists and explicit loops. All variable names and algorithm order are preserved from the original Octave source.
 ```

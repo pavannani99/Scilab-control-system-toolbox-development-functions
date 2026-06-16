@@ -1,101 +1,206 @@
-```markdown
 # ss2ss
 
 ## Description
-`ss2ss` applies a similarity transformation to a state-space model.
+
+* Applies a similarity transformation to a state-space model.
+
+* Supports both state-space system input and direct matrix input.
+
+* For a state-space model,
+
+  ```
+  x_dot = A*x + B*u
+  y     = C*x + D*u
+  ```
+
+  the transformed matrices are computed as:
+
+  ```
+  A_T = inv(T)*A*T
+  B_T = inv(T)*B
+  C_T = C*T
+  D_T = D
+  ```
+
+* The implementation follows the Octave `ss2ss` source structure, while replacing Octave-specific functions with Scilab equivalents.
 
 ## Calling Sequence
-```
-sys_t = ss2ss(sys, T)
-[A_T, B_T, C_T, D_T] = ss2ss(A, B, C, D, T)
-```
+
+* `sys_t = ss2ss(sys, T)`
+* `[A_T, B_T, C_T, D_T] = ss2ss(A, B, C, D, T)`
 
 ## Parameters
 
-| Parameter | Type | Description |
-| --- | --- | --- |
-| `sys` | LTI | Input state-space system |
-| `T` | Matrix | Similarity transformation matrix |
-| `A, B, C, D` | Matrix | State-space matrices for 5-argument form |
-| `sys_t` | LTI | Transformed state-space system |
-| `A_T, B_T, C_T, D_T` | Matrix | Transformed state-space matrices |
-
-## Algorithm
-1. Validate number of input arguments — must be 2 or 5
-2. For 2-argument form: extract `A, B, C, D` from `sys`
-3. For 5-argument form: use `A, B, C, D` directly
-4. Compute `T = inv(transformation matrix)`
-5. Apply: `A_T = inv(T)*A*T`, `B_T = inv(T)*B`, `C_T = C*T`, `D_T = D`
-6. Return transformed system via `syslin` for 2-argument form, or raw matrices for 5-argument form
+* `sys` - State-space system
+* `A` - State matrix
+* `B` - Input matrix
+* `C` - Output matrix
+* `D` - Feedthrough matrix
+* `T` - Transformation matrix
+* `sys_t` - Transformed state-space system
+* `A_T` - Transformed state matrix
+* `B_T` - Transformed input matrix
+* `C_T` - Transformed output matrix
+* `D_T` - Transformed feedthrough matrix
 
 ## Dependencies
-`syslin`, `inv`, `argn`, `error`
 
-## Files
-- `ss2ss.sci`
-- `ss2ss_test.sce`
-- `README.md`
+* `syslin`
+* `inv`
+* `norm`
+* `disp`
 
-## How to Run
-```scilab
-exec("ss2ss.sci", -1);
-exec("ss2ss_test.sce", -1);
+## Source Translation Notes
+
+* The Octave source uses `ssdata(first_in)` to extract state-space matrices.
+
+* In Scilab, the same matrices are accessed directly using:
+
+  ```
+  first_in.A
+  first_in.B
+  first_in.C
+  first_in.D
+  ```
+
+* The Octave source uses `ss(A_T,B_T,C_T,D_T)` to create the transformed state-space system.
+
+* In Scilab, this is replaced with:
+
+  ```
+  syslin("c", A_T, B_T, C_T, D_T)
+  ```
+
+* The main variable names from the Octave source are preserved:
+
+  ```
+  first_in, second_in, third_in, fourth_in, fifth_in
+  first_out, second_out, third_out, fourth_out
+  A, B, C, D, T
+  A_T, B_T, C_T, D_T
+  ```
+
+## Examples
+
+## 1
+
 ```
-
-## Test Cases
-
-### Test Case 1 — State-Space System Input
-```scilab
 A = [1 2 3; 4 5 6; 7 8 9];
 B = [1; 2; 3];
 C = [-1 0 1];
 D = 0;
+
 T = [1 0 1; 0 1 1; 1 1 0];
-sys = syslin("c", A, B, C, D);
-sys_t = ss2ss(sys, T);
+
+original_system = syslin("c", A, B, C, D);
+transformed_system = ss2ss(original_system, T);
+
+disp(transformed_system.A);
+disp(transformed_system.B);
+disp(transformed_system.C);
+disp(transformed_system.D);
 ```
-**Expected:** All four matrices correctly transformed
 
----
-
-### Test Case 2 — Retransformation Check
-```scilab
-sys_orig = ss2ss(sys_t, inv(T));
 ```
-**Expected:** Retransformed system matches original A, B, C, D
+transformed_system.A =
+   5.    7.    3.
+   6.5   8.5   4.5
+   3.5   5.5   1.5
 
----
+transformed_system.B =
+   4.
+   5.
+   3.
 
-### Test Case 3 — Matrix Input Form
-```scilab
+transformed_system.C =
+   0.   1.  -1.
+
+transformed_system.D =
+   0.
+```
+
+## 2
+
+```
+retransformed_system = ss2ss(transformed_system, inv(T));
+
+disp(retransformed_system.A);
+disp(retransformed_system.B);
+disp(retransformed_system.C);
+disp(retransformed_system.D);
+```
+
+```
+retransformed_system.A =
+   1.   2.   3.
+   4.   5.   6.
+   7.   8.   9.
+
+retransformed_system.B =
+   1.
+   2.
+   3.
+
+retransformed_system.C =
+  -1.   0.   1.
+
+retransformed_system.D =
+   0.
+```
+
+## 3
+
+```
 [A_T, B_T, C_T, D_T] = ss2ss(A, B, C, D, T);
+
+disp(A_T);
+disp(B_T);
+disp(C_T);
+disp(D_T);
 ```
-**Expected:** Output matrices match Test Case 1 results
 
----
+```
+A_T =
+   5.    7.    3.
+   6.5   8.5   4.5
+   3.5   5.5   1.5
 
-### Test Case 4 — Wrong Number of Input Arguments
-```scilab
+B_T =
+   4.
+   5.
+   3.
+
+C_T =
+   0.   1.  -1.
+
+D_T =
+   0.
+```
+
+## 4
+
+```
 try
     ss2ss(A, B, C);
 catch
-    disp("Wrong number of input arguments detected successfully");
+    disp("Test Case 4: Wrong number of input arguments detected successfully");
 end
 ```
-**Expected:** Error raised
 
----
+```
+Test Case 4: Wrong number of input arguments detected successfully
+```
 
-### Test Case 5 — Too Many Output Arguments
-```scilab
+## 5
+
+```
 try
-    [out1, out2] = ss2ss(sys, T);
+    [out1, out2] = ss2ss(original_system, T);
 catch
-    disp("Too many output arguments detected successfully");
+    disp("Test Case 5: Too many output arguments detected successfully");
 end
 ```
-**Expected:** Error raised
 
-## Compatibility Notes
-Scilab translation of GNU Octave Control Package `ss2ss`. All transformation logic and variable names match the original Octave source.
+```
+Test Case 5: Too many output arguments detected successfully
 ```

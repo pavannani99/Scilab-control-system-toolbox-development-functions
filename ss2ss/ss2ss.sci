@@ -1,43 +1,4 @@
 /* 2026 Author: Pavan Kumar */
-/* ss2ss.sci
-applies a similarity transformation to a state-space model */
-/*
-Description:
-Applies the similarity transformation T to a state-space model.
-
-```
-  Given a state-space model:
-      x_dot = A*x + B*u
-      y     = C*x + D*u
-
-  the transformed state-space matrices are computed as:
-      A_T = inv(T)*A*T
-      B_T = inv(T)*B
-      C_T = C*T
-      D_T = D
-```
-
-Calling Sequence:
-sys_t = ss2ss(sys, T)
-[A_T, B_T, C_T, D_T] = ss2ss(A, B, C, D, T)
-
-Parameters:
-sys       - state-space system
-A         - state matrix
-B         - input matrix
-C         - output matrix
-D         - feedthrough matrix
-T         - transformation matrix
-sys_t     - transformed state-space system
-A_T       - transformed state matrix
-B_T       - transformed input matrix
-C_T       - transformed output matrix
-D_T       - transformed feedthrough matrix
-
-Dependencies:
-Uses Scilab built-ins syslin and inv.
-*/
-
 function [first_out, second_out, third_out, fourth_out] = ss2ss(first_in, second_in, third_in, fourth_in, fifth_in)
 
 if argn(2) <> 2 & argn(2) <> 5 then

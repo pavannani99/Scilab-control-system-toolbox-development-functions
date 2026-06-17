@@ -1,56 +1,44 @@
-/* 2026 Author: Pavan Kumar */
-/* blkdiag.sci
-creates block-diagonal concatenation of LTI models */
-/*
-Description:
-Applies block-diagonal concatenation to LTI systems.
-The function combines two or more state-space systems into a single block-diagonal system.
-
-Calling Sequence:
-sys = blkdiag(sys1, sys2, ..., sysN)
-
-Parameters:
-sys1, sys2, sysN - state-space systems
-sys               - block-diagonal state-space system
-
-Dependencies:
-Uses Scilab built-ins syslin, zeros, size, norm and disp.
-*/
-
 function sys = blkdiag(varargin)
 
-
 if argn(2) < 1 then
-    error("blkdiag: wrong number of input arguments");
+error("blkdiag: wrong number of input arguments");
 end
 
 sys = varargin(1);
 
 for k = 2:argn(2)
-
-    s1 = sys;
-    s2 = varargin(k);
-
-    if s1.dt <> s2.dt then
-        error("blkdiag: systems must have the same sampling time");
-    end
-
-    A = [s1.A, zeros(size(s1.A, 1), size(s2.A, 2));
-         zeros(size(s2.A, 1), size(s1.A, 2)), s2.A];
-
-    B = [s1.B, zeros(size(s1.B, 1), size(s2.B, 2));
-         zeros(size(s2.B, 1), size(s1.B, 2)), s2.B];
-
-    C = [s1.C, zeros(size(s1.C, 1), size(s2.C, 2));
-         zeros(size(s2.C, 1), size(s1.C, 2)), s2.C];
-
-    D = [s1.D, zeros(size(s1.D, 1), size(s2.D, 2));
-         zeros(size(s2.D, 1), size(s1.D, 2)), s2.D];
-
-    sys = syslin(s1.dt, A, B, C, D);
-
+sys = sys_group(sys, varargin(k));
 end
 
+endfunction
+
+function sys = sys_group(sys1, sys2)
+
+if typeof(sys1) <> "state-space" & typeof(sys1) <> "linear_system" then
+error("blkdiag: arguments must be LTI systems");
+end
+
+if typeof(sys2) <> "state-space" & typeof(sys2) <> "linear_system" then
+error("blkdiag: arguments must be LTI systems");
+end
+
+if sys1.dt <> sys2.dt then
+error("blkdiag: systems must have the same sampling time");
+end
+
+A = [sys1.A, zeros(size(sys1.A, 1), size(sys2.A, 2));
+zeros(size(sys2.A, 1), size(sys1.A, 2)), sys2.A];
+
+B = [sys1.B, zeros(size(sys1.B, 1), size(sys2.B, 2));
+zeros(size(sys2.B, 1), size(sys1.B, 2)), sys2.B];
+
+C = [sys1.C, zeros(size(sys1.C, 1), size(sys2.C, 2));
+zeros(size(sys2.C, 1), size(sys1.C, 2)), sys2.C];
+
+D = [sys1.D, zeros(size(sys1.D, 1), size(sys2.D, 2));
+zeros(size(sys2.D, 1), size(sys1.D, 2)), sys2.D];
+
+sys = syslin(sys1.dt, A, B, C, D);
 
 endfunction
 
@@ -199,9 +187,27 @@ sys1 = syslin("c", [-5], [2], [3], [1]);
 sys = blkdiag(sys1);
 
 if norm(sys.A - sys1.A) < tol then
-disp("Test Case 4: Single input system passed");
+disp("Test Case 4: Single input system A passed");
 else
-disp("Test Case 4: Single input system failed");
+disp("Test Case 4: Single input system A failed");
+end
+
+if norm(sys.B - sys1.B) < tol then
+disp("Test Case 4: Single input system B passed");
+else
+disp("Test Case 4: Single input system B failed");
+end
+
+if norm(sys.C - sys1.C) < tol then
+disp("Test Case 4: Single input system C passed");
+else
+disp("Test Case 4: Single input system C failed");
+end
+
+if norm(sys.D - sys1.D) < tol then
+disp("Test Case 4: Single input system D passed");
+else
+disp("Test Case 4: Single input system D failed");
 end
 
 disp("Test Case 4: Single system A:");

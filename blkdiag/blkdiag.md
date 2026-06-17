@@ -2,19 +2,19 @@
 
 ## Description
 
-* Creates block-diagonal concatenation of LTI state-space models.
-* Combines two or more state-space systems into one larger state-space system.
-* The function follows the same main structure as the Octave `blkdiag` function.
+`blkdiag` creates block-diagonal concatenation of LTI state-space models.
 
-For two systems,
+For multiple input systems,
 
-```
-sys = blkdiag(sys1, sys2)
+```text
+sys = blkdiag(sys1, sys2, ..., sysN)
 ```
 
-the resulting system matrices are formed as:
+the output system is formed by placing the individual system matrices along the block diagonal.
 
-```
+For two systems, the resulting matrices are:
+
+```text
 A = [A1  0
      0   A2]
 
@@ -30,8 +30,10 @@ D = [D1  0
 
 ## Calling Sequence
 
-* `sys = blkdiag(sys1, sys2)`
-* `sys = blkdiag(sys1, sys2, ..., sysN)`
+```text
+sys = blkdiag(sys1, sys2)
+sys = blkdiag(sys1, sys2, ..., sysN)
+```
 
 ## Parameters
 
@@ -48,9 +50,9 @@ D = [D1  0
 
 ## Source Translation Notes
 
-The Octave source structure is:
+The Octave Control Package source uses the following main structure:
 
-```
+```text
 function sys = blkdiag (varargin)
 
   sys = varargin{1};
@@ -62,181 +64,105 @@ function sys = blkdiag (varargin)
 endfunction
 ```
 
-The Scilab implementation follows the same structure:
+The Scilab implementation follows the same main structure:
 
-```
+```text
 function sys = blkdiag(varargin)
 
-  sys = varargin(1);
+sys = varargin(1);
 
-  for k = 2:argn(2)
-    sys = __sys_group__(sys, varargin(k));
-  end
+for k = 2:argn(2)
+sys = __sys_group__(sys, varargin(k));
+end
 
 endfunction
 ```
 
-The main syntax changes are:
+The main syntax replacements are:
 
-* `varargin{1}` is replaced by `varargin(1)`
-* `nargin` is replaced by `argn(2)`
-* `endfor` is replaced by `end`
-* Octave internal function `__sys_group__` is implemented locally in Scilab
-
-Since Octave's internal `__sys_group__` function is not directly available in Scilab, the same block-diagonal grouping operation is implemented by directly constructing the `A`, `B`, `C`, and `D` matrices.
-
-## Examples
-
-## 1
-
+```text
+varargin{1}   -> varargin(1)
+nargin        -> argn(2)
+endfor        -> end
 ```
+
+Octave uses the internal function `__sys_group__` to group two LTI systems. Since this internal Octave function is not directly available in Scilab, an equivalent local `__sys_group__` function is implemented for state-space systems.
+
+The local `__sys_group__` function constructs the block-diagonal `A`, `B`, `C`, and `D` matrices and creates the resulting system using `syslin`.
+
+## Test Cases
+
+The implementation was tested for:
+
+1. Two continuous-time state-space systems
+2. Three continuous-time state-space systems
+3. Two discrete-time systems with the same sampling time
+4. Single system input
+5. Different sampling time error handling
+
+## Example 1
+
+```text
 sys1 = syslin("c", [-1], [1], [2], [0]);
 sys2 = syslin("c", [-2], [3], [4], [5]);
 
 sys = blkdiag(sys1, sys2);
-
-disp(sys.A);
-disp(sys.B);
-disp(sys.C);
-disp(sys.D);
 ```
 
-Output:
+Expected output:
 
+```text
+A =
+-1   0
+ 0  -2
+
+B =
+1   0
+0   3
+
+C =
+2   0
+0   4
+
+D =
+0   0
+0   5
 ```
-sys.A =
-  -1.   0.
-   0.  -2.
 
-sys.B =
-   1.   0.
-   0.   3.
+## Example 2
 
-sys.C =
-   2.   0.
-   0.   4.
-
-sys.D =
-   0.   0.
-   0.   5.
-```
-
-## 2
-
-```
+```text
 sys1 = syslin("c", [-1], [1], [1], [0]);
 sys2 = syslin("c", [-2], [2], [2], [0]);
 sys3 = syslin("c", [-3], [3], [3], [0]);
 
 sys = blkdiag(sys1, sys2, sys3);
-
-disp(sys.A);
-disp(sys.B);
-disp(sys.C);
-disp(sys.D);
 ```
 
-Output:
+Expected output:
 
-```
-sys.A =
-  -1.   0.   0.
-   0.  -2.   0.
-   0.   0.  -3.
+```text
+A =
+-1   0   0
+ 0  -2   0
+ 0   0  -3
 
-sys.B =
-   1.   0.   0.
-   0.   2.   0.
-   0.   0.   3.
+B =
+1   0   0
+0   2   0
+0   0   3
 
-sys.C =
-   1.   0.   0.
-   0.   2.   0.
-   0.   0.   3.
+C =
+1   0   0
+0   2   0
+0   0   3
 
-sys.D =
-   0.   0.   0.
-   0.   0.   0.
-   0.   0.   0.
-```
-
-## 3
-
-```
-sys1 = syslin(0.1, [0.5], [1], [1], [0]);
-sys2 = syslin(0.1, [0.2], [2], [3], [4]);
-
-sys = blkdiag(sys1, sys2);
-
-disp(sys.A);
-disp(sys.B);
-disp(sys.C);
-disp(sys.D);
+D =
+0   0   0
+0   0   0
+0   0   0
 ```
 
-Output:
+## Output Verification
 
-```
-sys.A =
-   0.5   0.
-   0.    0.2
-
-sys.B =
-   1.   0.
-   0.   2.
-
-sys.C =
-   1.   0.
-   0.   3.
-
-sys.D =
-   0.   0.
-   0.   4.
-```
-
-## 4
-
-```
-sys1 = syslin("c", [-5], [2], [3], [1]);
-
-sys = blkdiag(sys1);
-
-disp(sys.A);
-disp(sys.B);
-disp(sys.C);
-disp(sys.D);
-```
-
-Output:
-
-```
-sys.A =
-  -5.
-
-sys.B =
-   2.
-
-sys.C =
-   3.
-
-sys.D =
-   1.
-```
-
-## 5
-
-```
-try
-    sys1 = syslin(0.1, [0.5], [1], [1], [0]);
-    sys2 = syslin(0.2, [0.3], [1], [1], [0]);
-    sys = blkdiag(sys1, sys2);
-catch
-    disp("Different sampling time detected successfully");
-end
-```
-
-Output:
-
-```
-Different sampling time detected successfully
-```
+The Scilab output was compared with the Octave Control Package output for the same test cases. The block-diagonal `A`, `B`, `C`, and `D` matrices matched for continuous-time, discrete-time, and single-system cases.

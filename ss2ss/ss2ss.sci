@@ -1,51 +1,87 @@
 /* 2026 Author: Pavan Kumar */
-function [first_out, second_out, third_out, fourth_out] = ss2ss(first_in, second_in, third_in, fourth_in, fifth_in)
+/* ss2ss.sci
+Applies a similarity transformation to a state-space model.
+This file includes the helper function sdata and unit tests.
+*/
 
-if argn(2) <> 2 & argn(2) <> 5 then
-error("ss2ss: wrong number of input arguments");
-end
+clc;
+clear;
 
-select argn(2)
-case 2 then
-A = first_in.A;
-B = first_in.B;
-C = first_in.C;
-D = first_in.D;
-T = inv(second_in);
-case 5 then
-A = first_in;
-B = second_in;
-C = third_in;
-D = fourth_in;
-T = inv(fifth_in);
+/* Helper function: sdata */
+
+function [A, B, C, D] = sdata(sys)
+
+
+if typeof(sys) <> "state-space" & typeof(sys) <> "linear_system" then
+    error("sdata: input argument must be a state-space system");
 end
 
-A_T = inv(T)*A*T;
-B_T = inv(T)*B;
-C_T = C*T;
-D_T = D;
+A = sys.A;
+B = sys.B;
+C = sys.C;
+D = sys.D;
 
-select argn(2)
-case 2 then
-if argn(1) > 1 then
-error("Too many output arguments");
-end
-first_out = syslin("c", A_T, B_T, C_T, D_T);
-case 5 then
-if argn(1) > 4 then
-error("Too many output arguments");
-end
-first_out = A_T;
-second_out = B_T;
-third_out = C_T;
-fourth_out = D_T;
-end
 
 endfunction
 
-// TEST CASE 1: state-space system input
+/* Main function: ss2ss */
+
+function [first_out, second_out, third_out, fourth_out] = ss2ss(first_in, second_in, third_in, fourth_in, fifth_in)
+
+
+if argn(2) <> 2 & argn(2) <> 5 then
+    error("ss2ss: wrong number of input arguments");
+end
+
+select argn(2)
+
+case 2 then
+    [A, B, C, D] = sdata(first_in);
+    T = inv(second_in);
+
+case 5 then
+    A = first_in;
+    B = second_in;
+    C = third_in;
+    D = fourth_in;
+    T = inv(fifth_in);
+
+end
+
+A_T = inv(T) * A * T;
+B_T = inv(T) * B;
+C_T = C * T;
+D_T = D;
+
+select argn(2)
+
+case 2 then
+    if argn(1) > 1 then
+        error("Too many output arguments");
+    end
+
+    first_out = syslin("c", A_T, B_T, C_T, D_T);
+
+case 5 then
+    if argn(1) > 4 then
+        error("Too many output arguments");
+    end
+
+    first_out = A_T;
+    second_out = B_T;
+    third_out = C_T;
+    fourth_out = D_T;
+
+end
+
+
+endfunction
+
+/* Unit tests */
 
 tol = 1d-10;
+
+/* Test Case 1: state-space system input */
 
 A = [1 2 3; 4 5 6; 7 8 9];
 B = [1; 2; 3];
@@ -57,9 +93,9 @@ T = [1 0 1; 0 1 1; 1 1 0];
 original_system = syslin("c", A, B, C, D);
 transformed_system = ss2ss(original_system, T);
 
-A_expected = T*A*inv(T);
-B_expected = T*B;
-C_expected = C*inv(T);
+A_expected = T * A * inv(T);
+B_expected = T * B;
+C_expected = C * inv(T);
 D_expected = D;
 
 if norm(transformed_system.A - A_expected) < tol then
@@ -88,14 +124,17 @@ end
 
 disp("Test Case 1: Transformed A:");
 disp(transformed_system.A);
+
 disp("Test Case 1: Transformed B:");
 disp(transformed_system.B);
+
 disp("Test Case 1: Transformed C:");
 disp(transformed_system.C);
+
 disp("Test Case 1: Transformed D:");
 disp(transformed_system.D);
 
-// TEST CASE 2: retransformation check
+/* Test Case 2: retransformation check */
 
 retransformed_system = ss2ss(transformed_system, inv(T));
 
@@ -123,7 +162,7 @@ else
 disp("Test Case 2: Retransformed D failed");
 end
 
-// TEST CASE 3: matrix input-output form
+/* Test Case 3: matrix input-output form */
 
 [A_T, B_T, C_T, D_T] = ss2ss(A, B, C, D, T);
 
@@ -151,7 +190,7 @@ else
 disp("Test Case 3: Matrix input D_T failed");
 end
 
-// TEST CASE 4: wrong number of input arguments
+/* Test Case 4: wrong number of input arguments */
 
 try
 ss2ss(A, B, C);
@@ -159,7 +198,7 @@ catch
 disp("Test Case 4: Wrong number of input arguments detected successfully");
 end
 
-// TEST CASE 5: too many output arguments
+/* Test Case 5: too many output arguments for state-space input */
 
 try
 [out1, out2] = ss2ss(original_system, T);

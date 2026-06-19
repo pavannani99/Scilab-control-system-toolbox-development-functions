@@ -2,29 +2,29 @@
 
 ## Description
 
-`ss2ss` applies a similarity transformation T to a state-space model.
+`ss2ss` applies a similarity transformation to a state-space system.
 
-Given the state-space model:
+For a state-space model,
 
 ```text
 x_dot = A*x + B*u
 y     = C*x + D*u
 ```
 
-and a transformation matrix T that maps the state vector x to another coordinate system:
+and a non-singular transformation matrix `T`, the state vector is transformed as:
 
 ```text
 x_bar = T*x
 ```
 
-the state-space model is transformed into an equivalent model based on the new state vector:
+The equivalent transformed state-space model is:
 
 ```text
 x_bar_dot = T*A*inv(T)*x_bar + T*B*u
 y         = C*inv(T)*x_bar + D*u
 ```
 
-Note: In the literature, T may instead be defined inversely as `x_bar = inv(T)*x`. This implementation follows the Octave/MATLAB convention.
+This implementation follows the GNU Octave/MATLAB convention used in the original `ss2ss` function.
 
 ## Calling Sequence
 
@@ -35,7 +35,7 @@ sys_t = ss2ss(sys, T)
 
 ## Parameters
 
-* **sys** - State-space system (created using `syslin`).
+* **sys** - State-space system created using `syslin`.
 * **A** - State matrix.
 * **B** - Input matrix.
 * **C** - Output matrix.
@@ -49,80 +49,67 @@ sys_t = ss2ss(sys, T)
 
 ## Dependencies
 
-* `ssdata.sci` - Authored by Akash S. Required to extract A, B, C, D matrices from a syslin state-space system. Used here as the Scilab equivalent of Octave's `ssdata` data-access function, exactly as referenced in the original Octave source.
+* **ssdata.sci** - Required to extract the `A`, `B`, `C`, and `D` matrices from a `syslin` state-space system.
 
-The dependency file must be executed before the main function while running the unit tests.
+The dependency file `ssdata.sci` must be executed before executing `ss2ss.sci`.
 
 ```scilab
 exec("ssdata.sci", -1);
 exec("ss2ss.sci", -1);
 ```
 
-Built-in Scilab functions such as `argn`, `inv`, `syslin`, `typeof`, and `disp` are not listed as dependency files.
+The file `ssdata.sci` includes the following required helper functions internally:
+
+```text
+ssdata
+__sys_data__
+__dss2ss__
+```
+
+Built-in Scilab functions such as `argn`, `inv`, `syslin`, `typeof`, `disp`, and `norm` are not listed as dependency files.
 
 ## Source Translation Notes
 
-This function is a line-by-line Scilab translation of the GNU Octave Control package function `ss2ss`.
+This function is a Scilab translation of the GNU Octave Control package function `ss2ss`.
 
-Original Octave source (GPL-licensed):
+Original Octave source:
+
+```text
 Copyright (C) 2017 Fabian Alexander Wilms <f.alexander.wilms@gmail.com>
+```
 
-The Octave source validates the number of input arguments, branches on two calling modes (2 or 5 inputs), and applies the transformation:
+The Octave implementation supports two calling forms:
+
+```text
+ss2ss(sys, T)
+ss2ss(A, B, C, D, T)
+```
+
+The original Octave source first stores the inverse of the input transformation matrix:
 
 ```text
 T = inv(input_T)
-A_T = inv(T)*A*T   =  input_T * A * inv(input_T)
-B_T = inv(T)*B     =  input_T * B
-C_T = C*T          =  C * inv(input_T)
+```
+
+and then applies:
+
+```text
+A_T = inv(T)*A*T
+B_T = inv(T)*B
+C_T = C*T
 D_T = D
 ```
 
-This Scilab translation preserves the same argument-count branching, the same inversion convention for T, and the same output-argument restrictions per calling mode.
+Therefore, with respect to the user-provided transformation matrix `input_T`, the transformation becomes:
 
-Octave reference:
-
-```octave
-function [first_out, second_out, third_out, fourth_out] = ss2ss(first_in, second_in, third_in, fourth_in, fifth_in)
-
-  if (nargin != 2 && nargin != 5)
-    print_usage ();
-  endif
-
-  switch nargin
-    case 2
-      [A,B,C,D] = ssdata(first_in);
-      T = inv(second_in);
-    case 5;
-      A = first_in;
-      B = second_in;
-      C = third_in;
-      D = fourth_in;
-      T = inv(fifth_in);
-  endswitch
-
-  A_T = inv(T)*A*T;
-  B_T = inv(T)*B;
-  C_T = C*T;
-  D_T = D;
-
-  switch nargin
-    case 2
-      if nargout > 1
-        error('Too many output arguments')
-      endif
-      first_out = ss(A_T,B_T,C_T,D_T);
-    case 5
-      if nargout > 4
-        error('Too many output arguments')
-      endif
-      first_out = A_T;
-      second_out = B_T;
-      third_out = C_T;
-      fourth_out = D_T;
-  endswitch
-
-endfunction
+```text
+A_T = input_T*A*inv(input_T)
+B_T = input_T*B
+C_T = C*inv(input_T)
+D_T = D
 ```
+
+This Scilab version preserves the same argument-count handling, transformation convention, and output behavior.
 
 ## Files
 
@@ -144,7 +131,7 @@ exec("ss2ss.sci", -1);
 
 ## Examples
 
-### 1. Matrix input-output form
+### 1. Matrix Input Form
 
 ```scilab
 A = [1 2 3; 4 5 6; 7 8 9];
@@ -153,15 +140,15 @@ C = [-1 0 1];
 D = 0;
 T = [1 0 0; 1 1 0; 0 1 1];
 
-[A_t, B_t, C_t, D_t] = ss2ss(A, B, C, D, T);
+[A_T, B_T, C_T, D_T] = ss2ss(A, B, C, D, T);
 
-disp(A_t);
-disp(B_t);
-disp(C_t);
-disp(D_t);
+disp(A_T);
+disp(B_T);
+disp(C_T);
+disp(D_T);
 ```
 
-### 2. State-space system input form
+### 2. State-Space System Input Form
 
 ```scilab
 A = [1 2 3; 4 5 6; 7 8 9];
@@ -173,60 +160,64 @@ T = [1 0 0; 1 1 0; 0 1 1];
 sys = syslin("c", A, B, C, D);
 sys_t = ss2ss(sys, T);
 
-[A_t, B_t, C_t, D_t] = ssdata(sys_t);
+[A_T, B_T, C_T, D_T] = ssdata(sys_t);
 
-disp(A_t);
-disp(B_t);
-disp(C_t);
-disp(D_t);
+disp(A_T);
+disp(B_T);
+disp(C_T);
+disp(D_T);
 ```
 
-### 3. Inverse transformation check
+### 3. Inverse Transformation Check
 
 ```scilab
 sys_back = ss2ss(sys_t, inv(T));
 
 [A_back, B_back, C_back, D_back] = ssdata(sys_back);
 
-disp(A_back);  // returns to original A
-disp(B_back);  // returns to original B
-disp(C_back);  // returns to original C
-disp(D_back);  // returns to original D
+disp(A_back);
+disp(B_back);
+disp(C_back);
+disp(D_back);
 ```
 
 ## Test Cases
 
-The test cases are included inside `ss2ss.sci` as the function `ss2ss_test()`.
+The test cases are included directly below the main `ss2ss` function in `ss2ss.sci`.
 
-Run the tests using:
+No separate `.sce` test file is required.
+
+Run the files as:
 
 ```scilab
 exec("ssdata.sci", -1);
 exec("ss2ss.sci", -1);
-ss2ss_test();
 ```
 
-| # | Test | What it verifies |
-|---|------|-------------------|
-| 1 | Matrix input transformation | A, B, C, D matrices transform correctly when called with 5 arguments |
-| 2 | State-space system input transformation | `syslin` object transforms correctly when called with 2 arguments |
-| 3 | Inverse transformation returns original system | Applying `inv(T)` to the transformed system recovers the original A, B, C, D |
-| 4 | Too many output arguments detected | Calling with 2-argument syntax but requesting more than 1 output raises an error |
-| 5 | Invalid two-input matrix call detected | Calling `ss2ss(A, B)` with only 2 arguments (neither 2 nor 5 valid inputs in matrix mode) raises an error |
+After the main function is loaded, the test cases written below the function are executed automatically.
 
-### Expected Test Output
+| # | Test Case                               | What It Verifies                                                                                                           |
+| - | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| 1 | Matrix input transformation             | Verifies that `A`, `B`, `C`, and `D` are transformed correctly when the function is called with five input arguments.      |
+| 2 | State-space system input transformation | Verifies that a `syslin` state-space system is transformed correctly when the function is called with two input arguments. |
+| 3 | Inverse transformation check            | Verifies that applying `inv(T)` to the transformed system recovers the original state-space matrices.                      |
+| 4 | Second-order matrix transformation      | Verifies the transformation on a smaller 2x2 state-space example.                                                          |
+| 5 | Output argument validation              | Verifies that the two-input form allows only one output argument.                                                          |
+
+## Expected Test Output
 
 ```text
-Test 1 passed: matrix input transformation
-Test 2 passed: state-space system input transformation
-Test 3 passed: inverse transformation returns original system
-Test 4 passed: too many output arguments detected
-Test 5 passed: invalid two-input matrix call detected
-All ss2ss tests passed successfully
+test case 1: matrix input transformation passed
+test case 2: state-space system input transformation passed
+test case 3: inverse transformation returns original system passed
+test case 4: 2x2 matrix input transformation passed
+test case 5: too many output arguments detected passed
+All ss2ss test cases passed successfully
 ```
 
 ## Compatibility Notes
 
-* `T` must be a non-singular (invertible) matrix. The function does not check this explicitly; passing a singular T will cause `inv(T)` to error or produce numerically unreliable results, matching Octave's behaviour.
-* In the 2-argument form, the output is a continuous- or discrete-time `syslin` object matching the time domain of the input system.
-* In the 5-argument form, the four transformed matrices are returned directly without wrapping into a `syslin` object.
+* The transformation matrix `T` must be non-singular.
+* In the two-input form, the function returns a transformed `syslin` state-space system.
+* In the five-input form, the function returns the transformed matrices `A_T`, `B_T`, `C_T`, and `D_T`.
+* The function depends on `ssdata.sci` only for extracting state-space matrices from a `syslin` system.

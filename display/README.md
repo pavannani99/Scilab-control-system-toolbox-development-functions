@@ -1,4 +1,4 @@
-# display_lti
+# display
 
 ## Description:
 
@@ -118,5 +118,5 @@ Sampling time: 0.01 s
 Run the following command in Scilab:
 
 ```scilab
-exec("display_lti.sci", -1);
+exec("display.sci", -1);
 ```

@@ -1,11 +1,12 @@
 # repmat
 
-## Description:
-- Forms a block LTI system by repeating an input system vertically and horizontally.
-- `repmat(sys, 2, 3)` produces two vertical copies and three horizontal copies of `sys`.
-- The implementation follows the source structure and behaviour of GNU Octave Control package `@lti/repmat`.
+Forms a block LTI system by repeating an input system vertically and horizontally — the Scilab equivalent of GNU Octave's `@lti/repmat`.
 
-## Calling Sequence:
+> `repmat(sys, 2, 3)` produces two vertical copies and three horizontal copies of `sys`.
+
+---
+
+## 📐 Calling Sequence
 
 ```scilab
 sys = repmat(sys, m)
@@ -13,29 +14,37 @@ sys = repmat(sys, [m, n])
 sys = repmat(sys, m, n)
 ```
 
-## Parameters:
-- `sys` - Input Scilab LTI system represented as a transfer-function or state-space `syslin` object.
-- `m` - Number of vertical repetitions; it must be a non-negative integer.
-- `n` - Number of horizontal repetitions; it must be a non-negative integer. If omitted, `n = m`.
-- Returned `sys` - Repeated block LTI system.
+## 📥 Parameters
 
-## Dependencies:
-- `__sys_prune__.sci`
-- Execute `__sys_prune__.sci` before `repmat.sci`.
-- `is_real_scalar`, `is_real_vector`, and `__repmat_index__` are local helper functions included in `repmat.sci`.
+| Argument | Description |
+|---|---|
+| `sys` | Input Scilab LTI system — transfer-function or state-space `syslin` object |
+| `m` | Number of vertical repetitions (non-negative integer) |
+| `n` | Number of horizontal repetitions (non-negative integer). If omitted, `n = m` |
+| **returns** `sys` | Repeated block LTI system |
 
-## Execution:
+---
+
+## 🔗 Dependencies
+
+| File | Purpose |
+|---|---|
+| `__sys_prune__.sci` | Selects/reorders rows and columns of `sys` — required for index-based replication |
 
 ```scilab
 exec("__sys_prune__.sci", -1);
 exec("repmat.sci", -1);
 ```
 
-Executing `repmat.sci` defines the function and runs the test cases written below it.
+> `is_real_scalar`, `is_real_vector`, and `__repmat_index__` are local helper functions bundled inside `repmat.sci`.
 
-# Examples
+Executing `repmat.sci` defines the function **and** runs the test cases written directly below it.
 
-## 1
+---
+
+## ✨ Examples
+
+**1 — Tiling a SISO transfer function**
 
 ```scilab
 s = poly(0, "s");
@@ -43,14 +52,11 @@ sys = syslin("c", s + 1, s + 2);
 rsys = repmat(sys, 2, 3);
 size(rsys)
 ```
-
-## Expected Output
-
 ```text
 2.  3.
 ```
 
-## 2
+**2 — Tiling a MIMO state-space system**
 
 ```scilab
 A = [-1, 0; 0, -2];
@@ -61,25 +67,52 @@ sys = syslin("c", A, B, C, D);
 rsys = repmat(sys, 2, 3);
 size(rsys)
 ```
-
-## Expected Output
-
 ```text
 4.  6.
 ```
 
-The state dynamics matrix `A` is preserved. The input matrix `B` is repeated horizontally, the output matrix `C` is repeated vertically, and `D` is repeated in both directions.
+> `A` is preserved · `B` repeated horizontally · `C` repeated vertically · `D` repeated both ways
 
-## Test Cases:
-- Test Case 1 verifies the three-argument form using a SISO transfer function.
-- Test Case 2 verifies the scalar shorthand `repmat(sys, m)`.
-- Test Case 3 verifies the vector form `repmat(sys, [m, n])`.
-- Test Case 4 verifies MIMO state-space channel ordering and preservation of `A` and `X0`.
-- Test Case 5 checks an invalid dimension vector.
-- Test Case 6 checks a non-integer repetition dimension.
-- Test Case 7 checks an invalid number of input arguments.
+**3 — Scalar shorthand**
 
-## Files:
+```scilab
+rsys = repmat(sys, 2);   // same as repmat(sys, 2, 2)
+```
+
+**4 — Vector form**
+
+```scilab
+rsys = repmat(sys, [3, 1]);   // 3 vertical, 1 horizontal
+```
+
+---
+
+## ✅ Test Cases
+
+| # | Test | Verifies |
+|---|------|----------|
+| 1 | `repmat(sys, m, n)` on SISO TF | Block size correct; every num/den entry matches original |
+| 2 | `repmat(sys, m)` shorthand | Equal vertical/horizontal repetition |
+| 3 | `repmat(sys, [m, n])` vector form | Correct unpacking of 2-element vector |
+| 4 | MIMO state-space repetition | A preserved, B/C/D tiled correctly, X0 preserved |
+| 5 | Invalid second argument | Error on malformed dimension input |
+| 6 | Non-integer dimension | Error on non-integer m or n |
+| 7 | Wrong number of arguments | Error when called with only `sys` |
+
+**Output**
+```text
+Test Case 1: repmat(sys, m, n) passed
+Test Case 2: repmat(sys, m) passed
+Test Case 3: repmat(sys, [m, n]) passed
+Test Case 4: MIMO state-space repetition passed
+Test Case 5: invalid second argument detected
+Test Case 6: non-integer dimension detected
+Test Case 7: wrong number of input arguments detected
+```
+
+---
+
+## 📁 Files
 
 ```text
 repmat/
@@ -88,6 +121,15 @@ repmat/
 └── README.md
 ```
 
-## Author:
-- Original Octave author: Lukas F. Reichlin
-- 2026 Scilab translation: Simhadri Pavan kumar
+## ⚠️ Compatibility Notes
+
+- `m` and `n` must be non-negative integers — non-integer or negative values raise an error.
+- For state-space systems, initial state `X0` (if present) is preserved unchanged.
+- State/input/output **names** are not preserved — Scilab `syslin` objects don't carry these fields.
+
+---
+
+## 👤 Author
+
+- Original Octave author: **Lukas F. Reichlin**
+- 2026 Scilab translation: **Simhadri Pavan Kumar**

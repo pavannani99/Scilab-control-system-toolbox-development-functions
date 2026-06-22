@@ -1,5 +1,5 @@
 /* Copyright (C) 2009-2016 Lukas F. Reichlin */
-/* 2026 Scilab translation: ALLU RAM CHARAN */
+/* 2026 Scilab translation: Simhadri Pavan kumar*/
 
 /*
 Submodel extraction and channel reordering for Scilab LTI systems.

@@ -90,4 +90,4 @@ repmat/
 
 ## Author:
 - Original Octave author: Lukas F. Reichlin
-- 2026 Scilab translation: ALLU RAM CHARAN
+- 2026 Scilab translation: Simhadri Pavan kumar

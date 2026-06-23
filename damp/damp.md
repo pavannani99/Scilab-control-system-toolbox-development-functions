@@ -64,27 +64,151 @@ Executing `damp.sci` defines the function **and** runs the test cases written at
 
 ## ✅ Test Cases
 
-| # | Test | Verifies |
-|---|------|----------|
-| 1 | Continuous-time state-space model | Poles, damping, Wn match diagonal A eigenvalues |
-| 2 | Continuous-time transfer-function model | Complex conjugate pole pair, analytical Wn/zeta |
-| 3 | Discrete-time, specified sample time | Equivalent continuous mapping via `log(z)/tsam` |
-| 4 | Discrete-time, unspecified sample time | Defaults to 1 second per Octave convention |
-| 5 | Numeric square state matrix | Works on plain matrices, not just LTI objects |
-| 6 | No-output overview table | Table displays correctly with no return values |
-| 7 | Invalid non-LTI, non-square argument | Error raised for malformed input |
-| 8 | Wrong number of input arguments | Error raised when called with no arguments |
+### Test 1: Continuous-time state-space model
+
+**Input**
+```scilab
+A = [-1, 0, 0;
+      0, -2, 0;
+      0, 0, -3];
+B = ones(3, 1);
+C = eye(3, 3);
+D = zeros(3, 1);
+H = syslin("c", A, B, C, D);
+
+[Wn, zeta, P] = damp(H);
+```
 
 **Output**
 ```text
-Test Case 1: Continuous-time state-space model passed
-Test Case 2: Continuous-time transfer-function model passed
-Test Case 3: Discrete-time model with specified sample time passed
-Test Case 4: Unspecified discrete sample time passed
-Test Case 5: Numeric square state matrix passed
-Test Case 6: No-output overview table displayed successfully
-Test Case 7: Invalid argument detected successfully
-Test Case 8: Wrong number of input arguments detected successfully
+Wn   = [1; 2; 3]
+zeta = [1; 1; 1]
+P    = [-1; -2; -3]
+```
+
+---
+
+### Test 2: Continuous-time transfer-function model
+
+**Input**
+```scilab
+s = poly(0, "s");
+H = syslin("c", (2*s^2 + 5*s + 1) / (s^2 + 2*s + 3));
+
+[Wn, zeta, P] = damp(H);
+```
+
+**Output**
+```text
+Wn   = [1.7321; 1.7321]
+zeta = [0.5774; 0.5774]
+P    = [-1.0000 + 1.4142i; -1.0000 - 1.4142i]
+```
+
+---
+
+### Test 3: Discrete-time model with specified sample time
+
+**Input**
+```scilab
+z = poly(0, "z");
+H = syslin(0.01, (5*z^2 + 3*z + 1) / (z^3 + 6*z^2 + 4*z + 4));
+
+[Wn, zeta, P] = damp(H);
+```
+
+**Output**
+```text
+Wn   = [193.4924; 193.4924; 356.5264]
+zeta = [0.0774; 0.0774; -0.4728]
+P    = [-0.3020 + 0.8063i; -0.3020 - 0.8063i; -5.3961 + 0.0000i]
+```
+
+---
+
+### Test 4: Discrete-time model with unspecified sample time
+
+**Input**
+```scilab
+z = poly(0, "z");
+H = syslin("d", (z + 0.2) / ((z - 0.5) * (z - 0.25)));
+
+[Wn, zeta, P] = damp(H);
+```
+
+**Output**
+```text
+P    = [0.5; 0.25]
+Wn   = abs(log(P))      // sample time defaults to 1 second
+zeta = -cos(arg(log(P)))
+```
+
+---
+
+### Test 5: Numeric square state matrix
+
+**Input**
+```scilab
+A = [-1, 0;
+      0, -2];
+
+[Wn, zeta, P] = damp(A);
+```
+
+**Output**
+```text
+Wn   = [1; 2]
+zeta = [1; 1]
+P    = [-1; -2]
+```
+
+---
+
+### Test 6: No-output overview table
+
+**Input**
+```scilab
+s = poly(0, "s");
+H = syslin("c", (2*s^2 + 5*s + 1) / (s^2 + 2*s + 3));
+
+damp(H);
+```
+
+**Output**
+```text
+   Pole              Damping       Frequency           Time Constant
+                                    (rad/seconds)       (seconds)
+
+   -1.00e+00 + 1.41e+00i   5.77e-01    1.73e+00         1.00e+00
+   -1.00e+00 - 1.41e+00i   5.77e-01    1.73e+00         1.00e+00
+```
+
+---
+
+### Test 7: Invalid non-LTI, non-square argument
+
+**Input**
+```scilab
+damp([1, 2, 3]);
+```
+
+**Output**
+```text
+Error: damp: argument must be an LTI system
+```
+
+---
+
+### Test 8: Wrong number of input arguments
+
+**Input**
+```scilab
+damp();
+```
+
+**Output**
+```text
+Error: damp: wrong number of input arguments
 ```
 
 ---

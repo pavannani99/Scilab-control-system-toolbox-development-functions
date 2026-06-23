@@ -56,7 +56,9 @@ sys_T = ss2ss(sys, T)
 ---
 
 ## Dependencies
-rpeo link:https://github.com/akash-sankar/CSToolboxFunctions/blob/main/%40lti%20ssdata/ssdata.sci
+repo link:https://github.com/akash-sankar/CSToolboxFunctions/blob/main/%40lti%20ssdata/ssdata.sci
+
+
 The function depends on the following external file:
 
 | File         | Purpose                                                                          |

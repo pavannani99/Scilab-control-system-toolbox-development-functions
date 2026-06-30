@@ -3,7 +3,7 @@
 /* Author: Lukas Reichlin <lukas.reichlin@gmail.com> */
 /* Created: September 2009 */
 /* Version: 0.3 */
-/* 2026 Scilab translation: ALLU RAM CHARAN */
+/* 2026 Scilab translation: Pavan kumar Simhadri */
 
 function display(sys)
 

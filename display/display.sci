@@ -55,13 +55,7 @@ sys1.tsam = 0.1;
 mprintf("\nTest Case 1\n");
 display(sys1);
 
-// Expected output:
-// Input group 'control' = [1 2]
-// Input group 'disturbance' = [3]
-// Output group 'measured' = [1]
-// Output group 'estimated' = [2 3]
-// Name: Plant
-// Sampling time: 0.1 s
+
 
 
 // Test Case 2: continuous-time model
@@ -74,9 +68,7 @@ sys2.tsam = 0;
 mprintf("\nTest Case 2\n");
 display(sys2);
 
-// Expected output:
-// Name: Continuous System
-// No sampling-time line is displayed when tsam = 0.
+
 
 
 // Test Case 3: unspecified sampling time and empty model name
@@ -89,10 +81,7 @@ sys3.tsam = -1;
 mprintf("\nTest Case 3\n");
 display(sys3);
 
-// Expected output:
-// Input group 'input' = [1]
-// Output group 'output' = [1]
-// Sampling time: unspecified
+
 
 
 // Test Case 4: column-vector indices and an empty group
@@ -105,9 +94,4 @@ sys4.tsam = 0.01;
 mprintf("\nTest Case 4\n");
 display(sys4);
 
-// Expected output:
-// Input group 'actuators' = [1 2 3]
-// Input group 'unused' = []
-// Output group 'states' = [1 2]
-// Name: Discrete System
-// Sampling time: 0.01 s
+

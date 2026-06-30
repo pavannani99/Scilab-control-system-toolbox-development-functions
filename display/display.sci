@@ -2,22 +2,22 @@
 // Original: Lukas F. Reichlin
 
 function display(sys)
-    // Check if ingroup has fields
+   
     if size(fieldnames(sys.ingroup), "*") > 0 then
         __disp_group__(sys.ingroup, "Input");
     end
 
-    // Check if outgroup has fields
+
     if size(fieldnames(sys.outgroup), "*") > 0 then
         __disp_group__(sys.outgroup, "Output");
     end
 
-    // Display Name
+   
     if ~isempty(sys.name) then
         mprintf("Name: %s\n", sys.name);
     end
 
-    // Display Sampling Time
+   
     if sys.tsam > 0 then
         mprintf("Sampling time: %g s\n", sys.tsam);
     elseif sys.tsam == -1 then
@@ -32,7 +32,7 @@ function __disp_group__(group, io)
     for k = 1:size(name, "*")
         val = group(name(k));
         
-        // Convert array to string representation [x x x]
+       
         if isempty(val) then
             idx_string = "[]";
         else
@@ -43,7 +43,7 @@ function __disp_group__(group, io)
     end
 endfunction
 
-// --- Simplified Test Cases (Numerical Focus) ---
+//  Test Cases 
 
 // Test Case 1: Standard numeric indices
 sys1 = struct("ingroup", struct("a", [1 2]), "outgroup", struct("b", 3), "name", "Sys1", "tsam", 0.5);

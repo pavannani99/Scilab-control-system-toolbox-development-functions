@@ -1,122 +1,124 @@
-# display
+# display (LTI System)
 
-## Description:
+## Description
 
-* Displays the common properties of an LTI object.
-* Displays input groups, output groups, model name and sampling time.
-* This is the Scilab translation of the GNU Octave Control package function `@lti/display.m`.
+* Formats and prints the properties of Linear Time-Invariant (LTI) system objects.
+* Displays input group mappings, output group mappings, system names, and sampling times.
+* Provides a human-readable summary of the system structure.
 
-## Calling Sequence:
+## Calling Sequence
 
-```scilab
-display_lti(sys)
-```
+* `display(sys)`
 
-## Parameters:
+## Parameters
 
-* `sys` - LTI structure containing the following fields:
+* `sys` - An LTI system structure containing the following fields:
+* `ingroup` - Structure defining input group names and numeric indices.
+* `outgroup` - Structure defining output group names and numeric indices.
+* `name` - String identifier for the system.
+* `tsam` - Sampling time ($0$ for continuous-time, $>0$ for discrete-time, $-1$ for unspecified).
 
-  * `ingroup` - Structure containing input-group names and input indices.
-  * `outgroup` - Structure containing output-group names and output indices.
-  * `name` - Name of the LTI model.
-  * `tsam` - Sampling time of the model.
 
-## Dependencies:
 
-* No external dependency files are required.
-* The local helper function `__disp_group__` is included in `display_lti.sci`.
-
-# Examples
+## Examples
 
 ## 1
 
 ```scilab
-sys = struct();
-sys.ingroup = struct("control", [1 2], "disturbance", 3);
-sys.outgroup = struct("measured", 1, "estimated", [2 3]);
-sys.name = "Plant";
-sys.tsam = 0.1;
+sys1 = struct();
+sys1.ingroup = struct("a", [1 2]);
+sys1.outgroup = struct("b", 3);
+sys1.name = "Sys1";
+sys1.tsam = 0.5;
+display(sys1);
 
-display_lti(sys);
 ```
 
-## Expected Output
-
 ```text
-Input group 'control' = [1 2]
-Input group 'disturbance' = [3]
-Output group 'measured' = [1]
-Output group 'estimated' = [2 3]
-Name: Plant
-Sampling time: 0.1 s
+Input group 'a' = [1 2]
+Output group 'b' = [3]
+Name: Sys1
+Sampling time: 0.5 s
+
 ```
 
 ## 2
 
 ```scilab
-sys = struct();
-sys.ingroup = struct();
-sys.outgroup = struct();
-sys.name = "Continuous System";
-sys.tsam = 0;
+sys2 = struct();
+sys2.ingroup = struct("a", 1);
+sys2.outgroup = struct("b", 2);
+sys2.name = "Sys2";
+sys2.tsam = 0;
+display(sys2);
 
-display_lti(sys);
 ```
-
-## Expected Output
 
 ```text
-Name: Continuous System
-```
+Input group 'a' = [1]
+Output group 'b' = [2]
+Name: Sys2
 
-No sampling-time line is displayed when `tsam = 0`.
+```
 
 ## 3
 
 ```scilab
-sys = struct();
-sys.ingroup = struct("input", 1);
-sys.outgroup = struct("output", 1);
-sys.name = "";
-sys.tsam = -1;
+sys3 = struct();
+sys3.ingroup = struct();
+sys3.outgroup = struct();
+sys3.name = "Sys3";
+sys3.tsam = -1;
+display(sys3);
 
-display_lti(sys);
 ```
 
-## Expected Output
-
 ```text
-Input group 'input' = [1]
-Output group 'output' = [1]
+Name: Sys3
 Sampling time: unspecified
+
 ```
 
 ## 4
 
 ```scilab
-sys = struct();
-sys.ingroup = struct("actuators", [1; 2; 3], "unused", []);
-sys.outgroup = struct("states", [1; 2]);
-sys.name = "Discrete System";
-sys.tsam = 0.01;
+sys4 = struct();
+sys4.ingroup = struct("a", [1; 2]);
+sys4.outgroup = struct("b", [3; 4]);
+sys4.name = "Sys4";
+sys4.tsam = 0.1;
+display(sys4);
 
-display_lti(sys);
 ```
-
-## Expected Output
 
 ```text
-Input group 'actuators' = [1 2 3]
-Input group 'unused' = []
-Output group 'states' = [1 2]
-Name: Discrete System
-Sampling time: 0.01 s
+Input group 'a' = [1 2]
+Output group 'b' = [3 4]
+Name: Sys4
+Sampling time: 0.1 s
+
 ```
 
-## Execution:
-
-Run the following command in Scilab:
+## 5
 
 ```scilab
-exec("display.sci", -1);
+sys5 = struct();
+sys5.ingroup = struct("a", [1 2 3 4]);
+sys5.outgroup = struct("b", [5 6]);
+sys5.name = "Sys5";
+sys5.tsam = 1.0;
+display(sys5);
+
 ```
+
+```text
+Input group 'a' = [1 2 3 4]
+Output group 'b' = [5 6]
+Name: Sys5
+Sampling time: 1 s
+
+```
+
+---
+
+Are you ready to move on to documenting another function in your library, or do you need any final adjustments to this README file?

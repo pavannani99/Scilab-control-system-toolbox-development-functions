@@ -1,4 +1,4 @@
-# display (LTI System)
+# display 
 
 ## Description
 

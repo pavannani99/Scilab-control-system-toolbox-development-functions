@@ -1,97 +1,49 @@
-// Copyright (C) 2026
-// Scilab translation for FOSSEE Control Systems Toolbox
-//
-// Frequency response helper for state-space/rational LTI systems.
-// Based on the Octave Control package internal function:
-//     __freqresp__
-//
-// For internal use only.
-
-function H = __freqresp__(sys, w, cellflag)
-
-    rhs = argn(2);
-
-    if rhs < 2 then
-        error("__freqresp__: wrong number of input arguments");
+function H = __freqresp__(sys, w)
+    ty = typeof(sys);
+    select ty
+    case 'state-space'
+        H = __freqresp_ss__(sys, w);
+    case 'rational'
+        H = __freqresp_tf__(sys, w);
+    else
+        error("freqresp: unsupported system type: " + ty);
     end
+endfunction
 
-    if rhs < 3 then
-        cellflag = %f;
-    end
-
-    if cellflag then
-        error("__freqresp__: cell output is not supported in this Scilab translation");
-    end
-
-    if typeof(sys) == "rational" then
-        sys = tf2ss(sys);
-    elseif typeof(sys) <> "state-space" then
-        error("__freqresp__: first argument must be an LTI system");
-    end
-
-    a = sys.A;
-    b = sys.B;
-    c = sys.C;
-    d = sys.D;
-
-    [p, m] = size(d);
-    n = size(a, 1);
-
-    w = matrix(w, 1, -1);
-    nw = length(w);
-
-    H = zeros(p, m, nw);
-
-    if n == 0 then
-        for k = 1:nw
-            H(:, :, k) = d;
+function H = __freqresp_ss__(sys, w)
+    [ny, nu] = size(sys);
+    n = size(sys.A, 1);
+    lw = length(w);
+    H = zeros(ny, nu, lw);
+    if sys.dt == 'c' | isempty(sys.dt) | sys.dt == '' then
+        for k = 1:lw
+            s = %i * w(k);
+            mat = s*eye(n,n) - sys.A;
+            x = linsolve(mat, sys.B);
+            H(:,:,k) = sys.C * x + sys.D;
         end
-        return;
+    else
+        Ts = sys.dt;
+        for k = 1:lw
+            z = exp(%i * w(k) * Ts);
+            mat = z*eye(n,n) - sys.A;
+            x = linsolve(mat, sys.B);
+            H(:,:,k) = sys.C * x + sys.D;
+        end
     end
+endfunction
 
-    if __freqresp_isct__(sys) then
+function H = __freqresp_tf__(sys, w)
+    if sys.dt == 'c' | isempty(sys.dt) | sys.dt == '' then
         s = %i * w;
     else
-        tsam = __freqresp_tsam__(sys);
-        s = exp(%i * w * abs(tsam));
+        s = exp(%i * w * sys.dt);
     end
+    resp = horner(sys, s);
+    [ny, nu] = size(sys);
+    lw = length(w);
 
-    e = eye(n, n);
-
-    for k = 1:nw
-        H(:, :, k) = c * ((s(k) * e - a) \ b) + d;
-    end
-
-endfunction
-
-
-function flag = __freqresp_isct__(sys)
-
-    dt = sys.dt;
-
-    if typeof(dt) == "string" then
-        flag = (dt == "c");
-    else
-        flag = %f;
-    end
-
-endfunction
-
-
-function tsam = __freqresp_tsam__(sys)
-
-    dt = sys.dt;
-
-    if typeof(dt) == "string" then
-        if dt == "c" then
-            tsam = 0;
-        else
-            // Scilab's "d" domain does not always store a numeric sample time.
-            // Use unit sampling time, matching z = exp(i*w) for unspecified Ts.
-            tsam = 1;
-        end
-    else
-        tsam = dt;
-    end
-
+    // Safe reshape for SISO
+    resp = matrix(resp, ny*nu, lw);
+    H = matrix(resp, ny, nu, lw);
 endfunction

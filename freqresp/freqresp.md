@@ -20,7 +20,7 @@
 - `H`   - Complex frequency response array of size `[p, m, length(w)]`.
 
 ## Dependencies
-- `__freqresp_core__.sci` (internal)
+- `__freqresp__.sci` (internal)
 
 ## Examples
 

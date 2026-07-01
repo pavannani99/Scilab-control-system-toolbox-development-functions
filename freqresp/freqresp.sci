@@ -20,7 +20,7 @@ function H = freqresp(sys, w)
     end
     w = real(w(:)');
 
-    H = __freqresp_core__(sys, w);
+    H = __freqresp__(sys, w);
 
 endfunction
 // ====================== Test Cases ======================

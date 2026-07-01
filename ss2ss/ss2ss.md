@@ -1,246 +1,134 @@
-# dssdata
-
+# ss2ss
 ## Description:
-
-* Access descriptor state-space (DSS) model data from a given LTI system.
-* If sys is not already a DSS model, it is automatically converted.
-* If called with no second argument and e is empty, returns e = eye(size(a)).
-* Used to extract or inspect internal state-space representations of LTI systems.
-
+* Applies a similarity transformation T to a state-space model.
+* Given the state-space model dx/dt = Ax + Bu, y = Cx + Du, and a transformation
+  matrix T mapping the state vector x to a new coordinate system, returns the
+  equivalent state-space model expressed in the new state vector.
+* Not limited to a single calling form: accepts either a full LTI system object
+  or the raw A, B, C, D matrices directly.
 ## Calling Sequence:
-
-* [a, b, c, d, e, tsam, scaled] = dssdata(sys)
-* [a, b, c, d, e, tsam, scaled] = dssdata(sys,flg)
-
+* sys_t = ss2ss(sys, T)
+* [A_t, B_t, C_t, D_t] = ss2ss(A, B, C, D, T)
 ## Parameters:
-
-* sys       - Any type of LTI system (state-space, transfer function, ZPK, etc.)
-* flg       - Optional second input.Default value is 0.
-* a         - State matrix (n-by-n)
-* b         - Input matrix (n-by-m)
-* c         - Output (measurement) matrix (p-by-n)
-* d         - Feedthrough matrix (p-by-m)
-* e         - Descriptor matrix (n-by-n), empty or identity
-* tsam      - Sampling time
-
+* sys    - State-space LTI system (as returned by syslin)
+* T      - Similarity transformation matrix (n-by-n)
+* A      - State matrix (n-by-n)
+* B      - Input matrix (n-by-m)
+* C      - Output (measurement) matrix (p-by-n)
+* D      - Feedthrough matrix (p-by-m)
+* sys_t  - Transformed state-space system
+* A_t, B_t, C_t, D_t - Transformed state-space matrices
 ## Dependencies:
-
-**sys_data**, **dss2ss**
-
+**ssdata**
 ## Test Cases
-
 The module includes integrated tests. Run the following to execute them:
-
 ```scilab
-dssdata(); 
-
+exec('ssdata.sci', -1);
+exec('ss2ss.sci', -1);
 ```
-
 | Test Case | Description | Expected Logic |
 | --- | --- | --- |
-| **Standard Input** | Convert `syslin` to DSS | Returns valid a, b, c, d, e, tsam |
-| **Empty Descriptor** | Validate E-matrix handling | If E is empty, returns Identity |
-| **Complex Input** | Validate complex matrix support | Handles complex values in matrices |
-
+| **Test Case 1** | State-space syntax `ss2ss(sys, T)` | Returns transformed A_T, B_T, C_T, D_T matching similarity-transform math |
+| **Test Case 2** | Matrix syntax `ss2ss(A, B, C, D, T)` | Returns the same transformed matrices as Test Case 1, via the 5-arg form |
+| **Test Case 3** | Reverse transformation `ss2ss(sys_t, inv(T))` | Recovers the original A, B, C, D from the transformed system |
+| **Test Case 4** | Identity transformation `ss2ss(sys, eye(A))` | T = I leaves the system unchanged |
+| **Test Case 5** | Compare both calling syntaxes | `norm()` of the difference between state-space and matrix syntax outputs is 0 for A, B, C, D |
 ## Examples
-
 ## 1
-
 ```
-A = [0 1; -2 -3];  
-B = [0; 1];        
-C = [1 0];         
-D = [0];           
-sys = syslin('c', A, B, C, D); 
-[a, b, c, d, e, tsam, scaled] = dssdata(sys, 0)
-
+A = [1 2 3;
+     4 5 6;
+     7 8 9];
+B = [1;
+     2;
+     3];
+C = [-1 0 1];
+D = 0;
+[T, E] = spec(A);
+sys = syslin("c", A, B, C, D);
+sys_t = ss2ss(sys, T)
 ```
-
 ```
-a = [2x2 double]
-   0.   1.
-  -2.  -3.
-
- b = [2x1 double]
+sys_t.A = [3x3 double]
+   0.5755207   2.0057583  -0.8179323
+   6.6838295   13.61719   -2.5847419
+  -4.4755865  -7.8258203   0.8072894
+sys_t.B = [3x1 double]
+  -0.5788863
+  -3.1483145
+   1.6307265
+sys_t.C = [1x3 double]
+   0.8912006  -0.2230866   1.112116
+sys_t.D =
    0.
-   1.
-
- c = [1x2 double]
-   1.   0.
-
- d =       
-   0.
-
- e = [1x2 double]    
-   1.   0.
-
- tsam =    
-  "c"
-
- scaled =    
-    []
-
 ```
-
 ## 2
-
 ```
-A = [0 1 0; 0 0 1; -6 -11 -6];
-B = [0 0; 0 0; 1 1];
-C = [1 0 0; 0 1 0];
-D = zeros(2,2);
-sys = syslin('c', A, B, C, D);
-[a, b, c, d, e, tsam, scaled] = dssdata(sys, 0)
-
+[A_t, B_t, C_t, D_t] = ss2ss(A, B, C, D, T)
 ```
-
 ```
- a = [3x3 double]
-   0.   1.    0.
-   0.   0.    1.
-  -6.  -11.  -6.
-
- b = [3x2 double]    
-   0.   0.
-   0.   0.
-   1.   1.
-
- c = [2x3 double]    
-   1.   0.   0.
-   0.   1.   0.
-
- d = [2x2 double]    
-   0.   0.
-   0.   0.
-
- e = [1x2 double]    
-   1.   0.
-
- tsam =   
-  "c"
-
- scaled = 
-    []
-
+A_t = [3x3 double]
+   0.5755207   2.0057583  -0.8179323
+   6.6838295   13.61719   -2.5847419
+  -4.4755865  -7.8258203   0.8072894
+B_t = [3x1 double]
+  -0.5788863
+  -3.1483145
+   1.6307265
+C_t = [1x3 double]
+   0.8912006  -0.2230866   1.112116
+D_t =
+   0.
 ```
-
 ## 3
-
 ```
-A = [0.5 0; 0 0.9];
-B = [1; 0];
-C = [0 1];
-D = [0];
-sys = syslin(0.1, A, B, C, D); 
-[a, b, c, d, e, tsam, scaled] = dssdata(sys)
-
+sys_original = ss2ss(sys_t, inv(T))
 ```
-
 ```
-a = [2x2 double]
-   0.5   0. 
-   0.    0.9
-
- b = [2x1 double]
+sys_original.A = [3x3 double]
+   1.   2.   3.
+   4.   5.   6.
+   7.   8.   9.
+sys_original.B = [3x1 double]
    1.
+   2.
+   3.
+sys_original.C = [1x3 double]
+  -1.   0.   1.
+sys_original.D =
    0.
-
- c = [1x2 double]
-   0.   1.
-
- d = 
-   0.
-
- e = [1x2 double]
-   1.   0.
-
- tsam = 
-    0.1
-
- scaled = 
-    []
-
 ```
-
 ## 4
-
 ```
-A = [0 1; -2 -3];  
-B = [0; 1];        
-C = [1 0];         
-D = [0];           
-sys = syslin(0.1, A, B, C, D); 
-[a, b, c, d, e, tsam, scaled] = dssdata(sys, [])
-
+I = eye(A);
+sys_identity = ss2ss(sys, I)
 ```
-
 ```
-a = [2x2 double]
-   0.   1.
-  -2.  -3.
-
- b = [2x1 double]
-   0.
+sys_identity.A = [3x3 double]
+   1.   2.   3.
+   4.   5.   6.
+   7.   8.   9.
+sys_identity.B = [3x1 double]
    1.
-
- c = [1x2 double]
-   1.   0.
-
- d = 
+   2.
+   3.
+sys_identity.C = [1x3 double]
+  -1.   0.   1.
+sys_identity.D =
    0.
-
- e = 
-    []
-
- tsam = 
- 0.1
-
- scaled = 
-    []
-
 ```
-
 ## 5
-
 ```
-A = [0 1; -2 3+4*%i];
-B = [0; 1+2*%i];
-C = [1 -1*%i];
-D = [0];
-sys = syslin(0.1, A, B, C, D);
-[a, b, c, d, e, tsam, scaled] = dssdata(sys, [])
-
+sys_t = ss2ss(sys, T);
+[A_t, B_t, C_t, D_t] = ss2ss(A, B, C, D, T);
+disp(norm(sys_t.A - A_t));
+disp(norm(sys_t.B - B_t));
+disp(norm(sys_t.C - C_t));
+disp(norm(sys_t.D - D_t));
 ```
-
 ```
-a = [2x2 double]
-
-   0. + 0.i   1. + 0.i
-  -2. + 0.i   3. + 4.i
-
- b = [2x1 double]
-
-   0. + 0.i
-   1. + 2.i
-
- c = [1x2 double]
-
-   1. + 0.i   0. - i  
-
- d = 
-
-   0.
-
- e = 
-
-    []
-
- tsam = 
-
-   0.1
-
- scaled = 
-
-    []
-
+ 0.
+ 0.
+ 0.
+ 0.
 ```

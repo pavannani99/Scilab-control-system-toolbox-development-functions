@@ -1,87 +1,80 @@
-# freqresp - Scilab Translation
-
-## Function name
-
-`freqresp`
-
-## Octave source name
-
-`@lti/freqresp`
-
-## MATLAB function name
-
-`freqresp`
+# freqresp
 
 ## Description
 
-This function evaluates the frequency response of an LTI system at the given angular frequencies.
-For a system with `p` outputs and `m` inputs, the output `H` has dimensions:
+- Evaluate frequency response of an LTI system at given frequencies.
+- For a system with `p` outputs and `m` inputs, returns a 3D complex array `H` of size `[p, m, length(w)]`.
+- `H(:,:,k)` gives the frequency response at frequency `w(k)`.
+- Supports both continuous and discrete-time systems.
+- Accepts `state-space` or `rational` (tf) system objects.
 
-```text
-[p, m, length(w)]
-```
+## Calling Sequence
 
-The response at frequency `w(k)` is stored in:
+- `H = freqresp(sys, w)`
+- `H = freqresp(sys, [])` (returns empty array with correct dimensions)
 
-```text
-H(:, :, k)
-```
+## Parameters
 
-## Files
-
-```text
-freqresp/
-├── __freqresp__.sci
-├── freqresp.sci
-└── README.md
-```
+- `sys` - LTI system (`state-space` or `rational`).
+- `w`   - Real-valued vector of frequencies (rad/s). Can be empty.
+- `H`   - Complex frequency response array of size `[p, m, length(w)]`.
 
 ## Dependencies
+- `__freqresp_core__.sci` (internal)
 
-| File | Purpose |
-|---|---|
-| `__freqresp__.sci` | Internal helper that evaluates the response using the state-space frequency-response formula. |
+## Examples
 
-## Execution order
-
-```scilab
-exec("__freqresp__.sci", -1);
-exec("freqresp.sci", -1);
-```
-
-## Run tests
-
-The test cases are included inside the main file `freqresp.sci`.
+## 1
 
 ```scilab
-freqresp_test();
+s = poly(0,'s');
+G = syslin('c', 1/(s+1));
+w = [0, 1, 10];
+H = freqresp(G, w);
+disp("Test Case 1 (SISO):");
+disp("w =", w);
+disp("H =", H);
 ```
 
-## Implemented behavior
+## 2
 
-- Continuous-time state-space systems
-- Discrete-time state-space systems
-- Rational transfer-function input using `tf2ss`
-- Real scalar, row-vector, and column-vector frequency input
-- SISO and MIMO output arrays
-- Error handling for wrong number of arguments
-- Error handling for complex/non-real frequency vectors
+```scilab
+s = poly(0,'s');
+G = syslin('c', 1/(s^2 + 0.2*s + 1));
+w = [0.1, 1];
+H = freqresp(G, w);
+disp("Test Case 2:");
+disp("H =", H);
+```
 
-## Test cases included
+## 3
 
-1. Continuous-time SISO state-space response.
-2. Continuous-time MIMO state-space response.
-3. Discrete-time state-space response with implicit unit sample time.
-4. Column-vector frequency input.
-5. Scalar frequency input.
-6. Complex frequency-vector error case.
-7. Wrong-number-of-arguments error case.
+```scilab
+s = poly(0,'s');
+G = syslin('c', [1; 2*s]/(s+1));
+H = freqresp(G, [0 1]);
+disp("Test Case 3 (MIMO 2x1):");
+disp("H(:,:,1) =", H(:,:,1));
+```
 
-## Notes
+## 4
 
-The main Octave `@lti/freqresp` file validates the input arguments and calls the internal helper `__freqresp__`.
-This Scilab translation keeps the same source structure using `freqresp.sci` and `__freqresp__.sci`.
+```scilab
+G = syslin(0.5, 0.8/(1-0.5*%z^-1));
+H = freqresp(G, [0 %pi]);
+disp("Test Case 4 (Discrete):");
+disp("H =", H);
+```
 
-The Octave package has separate class-specific `__freqresp__` implementations for `ss`, `tf`, and `frd` models. This Scilab version focuses on regular Scilab state-space systems and rational transfer functions that can be converted with `tf2ss`.
+## 5
 
-Descriptor-system `E` matrix support, prescaling, and FRD model support are not implemented in this version.
+```scilab
+s = poly(0,'s');
+G = syslin('c', 1/(s+1));
+H = freqresp(G, 5);
+disp("Test Case 5 (Scalar frequency):");
+disp("H =", H);
+```
+
+**Author**: Pavan Kumar  
+**Status**: Completed - Octave Compatible

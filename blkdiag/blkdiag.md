@@ -1,12 +1,12 @@
 # blkdiag
 
-Block-diagonal concatenation of Scilab LTI systems — the Scilab equivalent of GNU Octave Control package `@lti/blkdiag.m` by Lukas Reichlin.
+Block-diagonal concatenation of Scilab LTI systems — the Scilab equivalent of the GNU Octave Control package `@lti/blkdiag.m` by Lukas Reichlin.
 
-`blkdiag` combines two or more LTI models into one larger block-diagonal state-space model. The main function follows the Octave source structure closely and calls `__sys_group__` for pairwise system grouping.
+`blkdiag` combines two or more LTI systems into a larger block-diagonal state-space model. The implementation follows the same iterative grouping approach as the GNU Octave implementation and relies on helper functions for system grouping and sampling-time compatibility.
 
 ---
 
-## 📐 Calling Sequence
+# 📐 Calling Sequence
 
 ```scilab
 sys = blkdiag(sys1)
@@ -16,479 +16,294 @@ sys = blkdiag(sys1, sys2, ..., sysN)
 
 ---
 
-## 📥 Parameters
+# 📥 Parameters
 
-| Argument | Description |
-|---|---|
+| Argument                | Description                                                                |
+| ----------------------- | -------------------------------------------------------------------------- |
 | `sys1, sys2, ..., sysN` | Scilab LTI systems created using `syslin`, or numeric static-gain matrices |
-| `sys` | Resulting block-diagonal LTI system |
+| `sys`                   | Resulting block-diagonal LTI system                                        |
 
 ---
 
-## 🧮 Algorithm
+# 🔗 Dependencies
 
-The main Octave source is:
+## Direct Dependency
 
-```octave
-function sys = blkdiag (varargin)
+| File                             | Purpose                                                     | Source                           |
+| -------------------------------- | ----------------------------------------------------------- | -------------------------------- |
+| `DEPENDENCIES/__sys_group__.sci` | Performs block-diagonal grouping of two state-space systems | GNU Octave `@ss/__sys_group__.m` |
 
-  sys = varargin{1};
+## Indirect Dependencies
 
-  for k = 2 : nargin
-    sys = __sys_group__ (sys, varargin{k});
-  endfor
+| File                                  | Purpose                                                | Source                                 |
+| ------------------------------------- | ------------------------------------------------------ | -------------------------------------- |
+| `DEPENDENCIES/__numeric_to_lti__.sci` | Converts numeric static-gain matrices into LTI systems | GNU Octave `@lti/__numeric_to_lti__.m` |
+| `DEPENDENCIES/__lti_group__.sci`      | Checks sampling-time compatibility                     | GNU Octave `@lti/__lti_group__.m`      |
 
-endfunction
-```
-
-The Scilab translation keeps the same main flow:
-
-```scilab
-function sys = blkdiag(varargin)
-
-    sys = varargin(1);
-
-    for k = 2:argn(2)
-        sys = __sys_group__(sys, varargin(k));
-    end
-
-endfunction
-```
-
-The actual block-diagonal matrix construction is performed in `__sys_group__.sci`:
-
-| Matrix | Formula |
-|---|---|
-| `A` | `[A1, 0; 0, A2]` |
-| `B` | `[B1, 0; 0, B2]` |
-| `C` | `[C1, 0; 0, C2]` |
-| `D` | `[D1, 0; 0, D2]` |
-
----
-
-## 🔗 Dependencies
-
-### Direct Dependency of `blkdiag.sci`
-
-| File | Purpose | Source |
-|---|---|---|
-| `__sys_group__.sci` | Performs block-diagonal grouping of two state-space systems | GNU Octave `@ss/__sys_group__.m` |
-
-### Indirect Dependencies Used by `__sys_group__.sci`
-
-| File | Purpose | Source |
-|---|---|---|
-| `__numeric_to_lti__.sci` | Converts numeric static-gain values into LTI systems | GNU Octave `@lti/__numeric_to_lti__.m` |
-| `__lti_group__.sci` | Checks and combines sampling-time information | GNU Octave `@lti/__lti_group__.m` |
-
-Load the files in this order:
+Load the files in the following order:
 
 ```scilab
-exec("__numeric_to_lti__.sci", -1);
-exec("__lti_group__.sci", -1);
-exec("__sys_group__.sci", -1);
-exec("blkdiag.sci", -1);
+exec("DEPENDENCIES/__numeric_to_lti__.sci",-1);
+exec("DEPENDENCIES/__lti_group__.sci",-1);
+exec("DEPENDENCIES/__sys_group__.sci",-1);
+exec("blkdiag.sci",-1);
 ```
 
-The test cases are included inside `blkdiag.sci` as the function `blkdiag_test()`.
-
-To run all tests:
+The test cases are included inside `blkdiag.sci` as the function:
 
 ```scilab
-blkdiag_test();
+blkdiag_test_simplified();
+```
+
+Run the tests using:
+
+```scilab
+blkdiag_test_simplified();
 ```
 
 ---
 
-## ✅ Test Cases
+# ✅ Test Cases
 
-### Test 1: Block diagonal concatenation of two continuous-time state-space systems
+## Test 1 — Continuous-time block diagonal concatenation
 
 **Input**
 
 ```scilab
-A1 = [0, 1;
-     -2, -3];
-B1 = [0;
-      1];
-C1 = [1, 0];
+A1 = [0,1;-2,-3];
+B1 = [0;1];
+C1 = [1,0];
 D1 = 0;
-sys1 = syslin("c", A1, B1, C1, D1);
+sys1 = syslin("c",A1,B1,C1,D1);
 
 A2 = [-4];
 B2 = [2];
 C2 = [3];
 D2 = 1;
-sys2 = syslin("c", A2, B2, C2, D2);
+sys2 = syslin("c",A2,B2,C2,D2);
 
-sys = blkdiag(sys1, sys2);
+sys = blkdiag(sys1,sys2);
+```
+
+**Verification**
+
+```scilab
+norm(sys.A-[A1,[0;0];[0,0],A2]) < 1d-8
 ```
 
 **Expected Output**
 
 ```text
-A =
-[ 0   1   0
- -2  -3   0
-  0   0  -4 ]
-
-B =
-[ 0   0
-  1   0
-  0   2 ]
-
-C =
-[ 1   0   0
-  0   0   3 ]
-
-D =
-[ 0   0
-  0   1 ]
-```
-
-**Test Result**
-
-```text
-Test Case 1: A matrix block diagonal passed
-Test Case 1: B matrix block diagonal passed
-Test Case 1: C matrix block diagonal passed
-Test Case 1: D matrix block diagonal passed
+T
 ```
 
 ---
 
-### Test 2: Block diagonal concatenation of three continuous-time systems
+## Test 2 — Multiple system concatenation
 
 **Input**
 
 ```scilab
-A1 = [0, 1;
-     -2, -3];
-B1 = [0;
-      1];
-C1 = [1, 0];
-D1 = 0;
-sys1 = syslin("c", A1, B1, C1, D1);
+sys3 = syslin("c",[-5],[1],[2],3);
 
-A2 = [-4];
-B2 = [2];
-C2 = [3];
-D2 = 1;
-sys2 = syslin("c", A2, B2, C2, D2);
+sys_all = blkdiag(sys1,sys2,sys3);
+```
 
-A3 = [-5];
-B3 = [1];
-C3 = [2];
-D3 = 3;
-sys3 = syslin("c", A3, B3, C3, D3);
+**Verification**
 
-sys = blkdiag(sys1, sys2, sys3);
+```scilab
+size(sys_all.A,1)==4
 ```
 
 **Expected Output**
 
 ```text
-A =
-[ 0   1   0   0
- -2  -3   0   0
-  0   0  -4   0
-  0   0   0  -5 ]
-
-B =
-[ 0   0   0
-  1   0   0
-  0   2   0
-  0   0   1 ]
-
-C =
-[ 1   0   0   0
-  0   0   3   0
-  0   0   0   2 ]
-
-D =
-[ 0   0   0
-  0   1   0
-  0   0   3 ]
-```
-
-**Test Result**
-
-```text
-Test Case 2: multiple-system A matrix passed
-Test Case 2: multiple-system B matrix passed
-Test Case 2: multiple-system C matrix passed
-Test Case 2: multiple-system D matrix passed
+T
 ```
 
 ---
 
-### Test 3: Single input system
+## Test 3 — Single system input
 
 **Input**
 
 ```scilab
-A1 = [0, 1;
-     -2, -3];
-B1 = [0;
-      1];
-C1 = [1, 0];
-D1 = 0;
+sys_single = blkdiag(sys1);
+```
 
-sys1 = syslin("c", A1, B1, C1, D1);
+**Verification**
 
-sys = blkdiag(sys1);
+```scilab
+norm(sys_single.A-A1) < 1d-8
 ```
 
 **Expected Output**
 
 ```text
-sys.A = A1
-sys.B = B1
-sys.C = C1
-sys.D = D1
-```
-
-**Test Result**
-
-```text
-Test Case 3: single input A matrix passed
-Test Case 3: single input B matrix passed
-Test Case 3: single input C matrix passed
-Test Case 3: single input D matrix passed
+T
 ```
 
 ---
 
-### Test 4: Dynamic system with numeric static-gain matrix
+## Test 4 — Static gain concatenation
 
 **Input**
 
 ```scilab
-A1 = [0, 1;
-     -2, -3];
-B1 = [0;
-      1];
-C1 = [1, 0];
-D1 = 0;
+K=[5,6];
 
-sys1 = syslin("c", A1, B1, C1, D1);
+sys_static=blkdiag(sys1,K);
+```
 
-K = [5, 6];
+**Verification**
 
-sys = blkdiag(sys1, K);
+```scilab
+size(sys_static.D,2)==3
 ```
 
 **Expected Output**
 
 ```text
-A =
-[ 0   1
- -2  -3 ]
-
-B =
-[ 0   0   0
-  1   0   0 ]
-
-C =
-[ 1   0
-  0   0 ]
-
-D =
-[ 0   0   0
-  0   5   6 ]
-```
-
-**Test Result**
-
-```text
-Test Case 4: numeric static gain A matrix passed
-Test Case 4: numeric static gain B matrix passed
-Test Case 4: numeric static gain C matrix passed
-Test Case 4: numeric static gain D matrix passed
+T
 ```
 
 ---
 
-### Test 5: Discrete-time systems with same sample time
+## Test 5 — Discrete-time systems
 
 **Input**
 
 ```scilab
-A1 = [0.5];
-B1 = [1];
-C1 = [2];
-D1 = [0];
-sys1 = syslin(0.1, A1, B1, C1, D1);
+dsys1=syslin(0.1,[0.5],[1],[2],[0]);
+dsys2=syslin(0.1,[0.25],[3],[4],[1]);
 
-A2 = [0.2];
-B2 = [3];
-C2 = [4];
-D2 = [5];
-sys2 = syslin(0.1, A2, B2, C2, D2);
+dsys=blkdiag(dsys1,dsys2);
+```
 
-sys = blkdiag(sys1, sys2);
+**Verification**
+
+```scilab
+norm(dsys.A-[0.5,0;0,0.25]) < 1d-8
 ```
 
 **Expected Output**
 
 ```text
-A =
-[ 0.5   0
-  0     0.2 ]
-
-B =
-[ 1   0
-  0   3 ]
-
-C =
-[ 2   0
-  0   4 ]
-
-D =
-[ 0   0
-  0   5 ]
-```
-
-**Test Result**
-
-```text
-Test Case 5: discrete-time A matrix passed
-Test Case 5: discrete-time B matrix passed
-Test Case 5: discrete-time C matrix passed
-Test Case 5: discrete-time D matrix passed
+T
 ```
 
 ---
 
-### Test 6: Mismatched sampling times
+## Test 6 — Continuous/discrete system mismatch
 
 **Input**
 
 ```scilab
-sys1 = syslin(0.1, [0.5], [1], [2], [0]);
-sys2 = syslin(0.2, [0.2], [3], [4], [5]);
-
-sys = blkdiag(sys1, sys2);
+blkdiag(sys1,dsys1);
 ```
 
 **Expected Output**
 
 ```text
-Error: lti_group: systems must have identical sampling times
+Error generated
 ```
 
-**Test Result**
+**Verification**
 
-```text
-Test Case 6: mismatched sampling time detected successfully
+```scilab
+err6 == %t
 ```
 
 ---
 
-### Test 7: Invalid argument
+## Test 7 — Invalid input type
 
 **Input**
 
 ```scilab
-sys1 = syslin("c", [0, 1; -2, -3], [0; 1], [1, 0], 0);
-
-sys = blkdiag(sys1, "wrong");
+blkdiag(sys1,"invalid");
 ```
 
 **Expected Output**
 
 ```text
-Error: lti: blkdiag: one system is neither an LTI system nor a numeric value
+Error generated
 ```
 
-**Test Result**
+**Verification**
 
-```text
-Test Case 7: invalid argument detected successfully
+```scilab
+err7 == %t
 ```
 
 ---
 
-## 🧪 Verified Scilab Test Output
+# 🧪 Verified Scilab Test Output
 
-The function was tested in Scilab using:
+The implementation was verified in Scilab using:
 
 ```scilab
-exec("__numeric_to_lti__.sci", -1);
-exec("__lti_group__.sci", -1);
-exec("__sys_group__.sci", -1);
-exec("blkdiag.sci", -1);
-blkdiag_test();
+exec("DEPENDENCIES/__numeric_to_lti__.sci",-1);
+exec("DEPENDENCIES/__lti_group__.sci",-1);
+exec("DEPENDENCIES/__sys_group__.sci",-1);
+exec("blkdiag.sci",-1);
+
+blkdiag_test_simplified();
 ```
 
 Observed output:
 
 ```text
-Running blkdiag test cases...
-Test Case 1: A matrix block diagonal passed
-Test Case 1: B matrix block diagonal passed
-Test Case 1: C matrix block diagonal passed
-Test Case 1: D matrix block diagonal passed
-Test Case 2: multiple-system A matrix passed
-Test Case 2: multiple-system B matrix passed
-Test Case 2: multiple-system C matrix passed
-Test Case 2: multiple-system D matrix passed
-Test Case 3: single input A matrix passed
-Test Case 3: single input B matrix passed
-Test Case 3: single input C matrix passed
-Test Case 3: single input D matrix passed
-Test Case 4: numeric static gain A matrix passed
-Test Case 4: numeric static gain B matrix passed
-Test Case 4: numeric static gain C matrix passed
-Test Case 4: numeric static gain D matrix passed
-Test Case 5: discrete-time A matrix passed
-Test Case 5: discrete-time B matrix passed
-Test Case 5: discrete-time C matrix passed
-Test Case 5: discrete-time D matrix passed
-Test Case 6: mismatched sampling time detected successfully
-Test Case 7: invalid argument detected successfully
-All blkdiag test cases completed.
+Test 1: T
+Test 2: T
+Test 3: T
+Test 4: T
+Test 5: T
+Test 6: T
+Test 7: T
 ```
 
 ---
 
-## ⚠️ Compatibility Notes
+# ⚠️ Compatibility Notes
 
-- The main `blkdiag.sci` file is kept as a close line-by-line translation of GNU Octave `@lti/blkdiag.m`.
-- Octave uses object fields such as `sys.a`, `sys.b`, `sys.c`, `sys.d`, `sys.lti`, and `sys.stname`.
-- Scilab `syslin` uses `sys.A`, `sys.B`, `sys.C`, `sys.D`, and `sys.dt`, so helper functions adapt the internal object access while preserving the same block-diagonal output behaviour.
-- Octave metadata fields such as input names, output names, input groups, output groups, and state names are not directly reproduced because Scilab `syslin` does not store the same LTI metadata structure.
-- Descriptor matrix `E` handling from Octave `@ss/__sys_group__.m` is not implemented for regular Scilab `syslin` models, since the current implementation targets standard state-space models with `A`, `B`, `C`, and `D`.
-- Numeric static-gain inputs are supported by converting them into static LTI systems before grouping.
+* The implementation follows the GNU Octave `@lti/blkdiag.m` interface.
+* Pairwise block-diagonal grouping is delegated to `__sys_group__.sci`.
+* Numeric static-gain matrices are automatically converted into LTI systems before grouping.
+* Continuous-time and discrete-time compatibility checks are handled by `__lti_group__.sci`.
+* Scilab `syslin` objects store only the standard state-space matrices (`A`, `B`, `C`, `D`) and sampling time (`dt`).
+* GNU Octave LTI metadata such as state names, input names, output names, input groups, output groups, and descriptor matrix `E` are not reproduced because they are not part of the standard Scilab `syslin` representation.
 
 ---
 
-## 📁 Files
+# 📁 Files
 
 ```text
 blkdiag/
-├── __numeric_to_lti__.sci
-├── __lti_group__.sci
-├── __sys_group__.sci
+├── DEPENDENCIES/
+│   ├── __numeric_to_lti__.sci
+│   ├── __lti_group__.sci
+│   └── __sys_group__.sci
 ├── blkdiag.sci
 └── README.md
 ```
 
 ---
 
-## 📚 References
+# 📚 References
 
-| Function | GNU Octave Source |
-|---|---|
-| `blkdiag` | https://github.com/gnu-octave/pkg-control/blob/main/inst/%40lti/blkdiag.m |
-| `__sys_group__` | https://github.com/gnu-octave/pkg-control/blob/main/inst/%40ss/__sys_group__.m |
+| Function             | GNU Octave Source                                                                    |
+| -------------------- | ------------------------------------------------------------------------------------ |
+| `blkdiag`            | https://github.com/gnu-octave/pkg-control/blob/main/inst/%40lti/blkdiag.m            |
+| `__sys_group__`      | https://github.com/gnu-octave/pkg-control/blob/main/inst/%40ss/__sys_group__.m       |
 | `__numeric_to_lti__` | https://github.com/gnu-octave/pkg-control/blob/main/inst/%40lti/__numeric_to_lti__.m |
-| `__lti_group__` | https://github.com/gnu-octave/pkg-control/blob/main/inst/%40lti/__lti_group__.m |
+| `__lti_group__`      | https://github.com/gnu-octave/pkg-control/blob/main/inst/%40lti/__lti_group__.m      |
 
 ---
 
-## 👤 Authors
+# 👤 Authors
 
-- Original `blkdiag` and `__sys_group__`: **Lukas Reichlin**
-- Original `__numeric_to_lti__`: **Torsten Lilge**
-- Scilab translation and integration: **Pavan Kumar**
+* Original `blkdiag`: **Lukas Reichlin**
+* Original `__sys_group__`: **Lukas Reichlin**
+* Original `__numeric_to_lti__`: **Torsten Lilge**
+* Scilab translation and integration: **Pavan Kumar**
